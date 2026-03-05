@@ -1,0 +1,27 @@
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+
+    # Redirigir todo al directorio public (htdocs en InfinityFree)
+    # Evitar redirección si ya estamos en public
+    RewriteCond %{REQUEST_URI} !^/public/
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteCond %{REQUEST_FILENAME} !-d
+    RewriteRule ^(.*)$ public/$1 [L,QSA]
+
+    # Si se accede directamente a la raíz, redirigir a public
+    RewriteCond %{REQUEST_URI} ^/$
+    RewriteRule ^ public/ [L]
+
+</IfModule>
+
+# Seguridad: Denegar acceso a archivos sensibles
+
+<FilesMatch "^\.env">
+Order allow,deny
+Deny from all
+</FilesMatch>
+
+<FilesMatch "composer\.(json|lock)$">
+Order allow,deny
+Deny from all
+</FilesMatch>
