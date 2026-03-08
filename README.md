@@ -8,6 +8,8 @@ Sistema integral de gestión para consultorios y clínicas médicas desarrollado
 
 ### ✨ Características Principales
 
+#### Módulos Clínicos
+
 - 👨‍⚕️ **Gestión de Doctores**: Registro completo con datos profesionales (matrícula nacional, matrícula profesional, especialidad, DNI, teléfono, dirección)
 - 👥 **Gestión de Pacientes**: Información completa incluyendo DNI, CUIL, fecha de nacimiento (con cálculo automático de edad), obra social, contactos de emergencia y alergias
 - 📅 **Sistema de Turnos Inteligente**:
@@ -24,11 +26,77 @@ Sistema integral de gestión para consultorios y clínicas médicas desarrollado
     - Indicaciones y recomendaciones
     - Exportación a PDF con formato profesional
     - PDFs separados para receta e instrucciones
+
+#### Módulos de Recepción y Administración
+
 - 🏥 **Obras Sociales**: Gestión de seguros médicos y coberturas
     - Descarga de padrón actualizado (`obras-sociales:download`)
     - Importación masiva desde archivo XLS/TSV de SSSalud (`obras-sociales:import-xls`)
     - Búsqueda y autocompletado en formularios
-- 💰 **Facturación**: Sistema completo de generación de facturas e invoices
+- 📋 **Recepción**: Panel de control centralizado
+    - Dashboard con vista de turnos del día
+    - Check-in de pacientes y confirmación de turnos
+    - Vista por médico con agenda individual
+    - Sala de espera en tiempo real con tiempos de espera
+    - Filtros por estado, fecha y profesional
+- 💰 **Facturación y Contabilidad**:
+    - Sistema completo de generación de facturas e invoices
+    - Cuentas corrientes de pacientes
+    - Registro de pagos y movimientos financieros
+    - Seguimiento de deudores
+    - Exportación de datos contables
+
+#### Módulos Hospitalarios
+
+- 🏥 **Internación**:
+    - Gestión de camas por habitación
+    - Control de ocupación y disponibilidad
+    - Admisiones y egresos de pacientes
+    - Seguimiento de evoluciones médicas
+    - Estados de cama (limpia, ocupada, en limpieza, fuera de servicio)
+- 🔪 **Quirófano**:
+    - Configuración de salas quirúrgicas
+    - Agenda de operaciones programadas
+    - Pre-internación y validación de documentación
+    - Asignación de salas y médicos cirujanos
+    - Estados de operación (programada, en progreso, completada)
+- 🚑 **Emergencias/Guardia**:
+    - Tablero de guardia con clasificación de prioridad
+    - Registro de admisiones de emergencia
+    - Triage y seguimiento de evoluciones
+    - Estados (en espera, en atención, hospitalizado, dado de alta)
+    - Vista por prioridad (crítico, urgente, estable)
+
+#### Módulos de Soporte
+
+- 💊 **Farmacia**:
+    - Gestión de inventario (medicamentos, insumos, instrumental)
+    - Control de stock con alertas de mínimos
+    - Solicitudes internas de materiales
+    - Seguimiento de vencimientos
+    - Control de esterilización de instrumental
+    - Movimientos de stock (entradas, salidas, ajustes)
+- 🚑 **Paramédicos**:
+    - Gestión de móviles/ambulancias
+    - Registro de traslados (interhospitalarios, domicilio-hospital, urgencias)
+    - Seguimiento de estado y prioridad
+    - Asignación de personal paramédico
+- 🔧 **Mantenimiento**:
+    - Gestión de equipos médicos
+    - Órdenes de mantenimiento preventivo y correctivo
+    - Historial de reparaciones
+    - Control de calibraciones y vencimientos
+    - Estados operacionales de equipamiento
+
+#### Sistema y Reportes
+
+- 📊 **Reportes Avanzados**:
+    - Reporte C2 (REFES): consultaciones y derivaciones
+    - Análisis epidemiológico: enfermedades notificables, distribución demográfica
+    - Indicadores de calidad: tiempos de espera, satisfacción, productividad
+    - Análisis por obra social: facturación y consultas
+    - Análisis de facturación: cobranzas, envejecimiento de cartera
+    - Ocupación de camas: tasas, rotación, estadías promedio
 - 📅 **Dashboard Personalizado**:
     - Vista de agenda diaria con calendario lateral
     - **Filtrado automático por doctor** - cada doctor ve su propia agenda por defecto
@@ -208,6 +276,8 @@ El sistema está configurado para operar en **zona horaria de Argentina** (`Amer
 - Acceso a todas las funcionalidades del sistema
 - Configuración de obras sociales
 - Reportes y estadísticas
+- Auditoría de cambios
+- Configuración de roles y permisos
 
 ### Doctor
 
@@ -216,49 +286,89 @@ El sistema está configurado para operar en **zona horaria de Argentina** (`Amer
 - Generación de recetas médicas
 - Atención de turnos programados
 - Consulta de historiales
+- Vista personalizada de agenda
+- Acceso a reportes de sus pacientes
 
 ### Secretaria
 
 - Registro de nuevos pacientes
 - Creación y gestión de turnos
 - Gestión de cola de atención
+- Panel de recepción con check-in de pacientes
+- Sala de espera en tiempo real
+- Vista de agenda por médico
+- Gestión de obras sociales
 - Facturación básica
 
 ### Farmacia
 
-- Gestión de inventario de medicamentos, insumos e instrumental
-- Procesamiento de solicitudes internas
-- Control de stock, vencimientos y esterilización
+- Gestión completa de inventario (medicamentos, insumos, instrumental)
+- Procesamiento de solicitudes internas de farmacia
+- Control de stock con alertas de mínimos y reorden
+- Seguimiento de vencimientos de medicamentos
+- Control de esterilización de instrumental
+- Registro de movimientos de stock (entradas, salidas, ajustes, devoluciones)
+- Gestión de lotes y números de serie
+- Reportes de inventario
 
 ### Encargado de Quirófano
 
-- Configuración de salas quirúrgicas
-- Gestión de agenda de operaciones y disponibilidad de salas
+- Configuración de salas quirúrgicas y recursos
+- Gestión de agenda de operaciones
+- Asignación de salas y verificación de disponibilidad
+- Estados de operaciones (programada, en progreso, completada, cancelada)
+- Registro de equipo quirúrgico
+- Preparación de salas
 
 ### Enfermería
 
-- Gestión de internaciones y seguimiento de camas
-- Registro operativo de limpieza de camas
+- Gestión de internaciones y camas
+- Admisión y egreso de pacientes hospitalizados
+- Registro de evoluciones médicas de internados
+- Control de estados de cama (limpia, ocupada, en limpieza, fuera de servicio)
+- Asignación de camas por habitación
+- Seguimiento de tiempo de internación
+- Limpieza y mantenimiento de infraestructura
 
 ### Emergencias
 
-- Gestión del tablero de guardia y evoluciones
-- Seguimiento de admisiones y cambios de estado
+- Gestión del tablero de guardia
+- Clasificación de prioridad (triage): crítico, urgente, estable
+- Registro de admisiones de emergencia
+- Seguimiento de evoluciones de guardia
+- Estados de atención (en espera, en atención, hospitalizado, dado de alta)
+- Derivaciones a especialidades
+- Coordinación con internación
 
 ### Contabilidad
 
-- Gestión de cuentas corrientes y movimientos financieros
-- Seguimiento de deudores y exportes contables
+- Gestión de cuentas corrientes de pacientes
+- Registro de movimientos financieros (cargos, pagos, ajustes)
+- Seguimiento de deudores y facturación pendiente
+- Reconciliación de pagos
+- Exportes contables
+- Reportes de facturación y cobranza
+- Análisis de envejecimiento de cartera
 
 ### Mantenimiento
 
-- Gestión de equipos médicos
-- Registro y seguimiento de órdenes de mantenimiento
+- Registro de equipos médicos e instrumental
+- Gestión de órdenes de mantenimiento (preventivo y correctivo)
+- Seguimiento de estado operacional de equipos
+- Historial de reparaciones
+- Control de calibraciones y certificaciones
+- Programación de mantenimiento preventivo
+- Reportes de disponibilidad de equipos
 
 ### Paramédico
 
 - Gestión de móviles/ambulancias
-- Registro y seguimiento de traslados
+- Registro de traslados (interhospitalario, domicilio-hospital, urgencias)
+- Asignación de personal paramédico
+- Seguimiento de estado de traslados (solicitado, en curso, completado, cancelado)
+- Control de prioridad de traslados
+- Registro de observaciones y evolución durante traslado
+- Coordinación con emergencias e internación
 
 ## 📄 Funcionalidades Destacadas
 
@@ -274,6 +384,122 @@ El sistema está configurado para operar en **zona horaria de Argentina** (`Amer
     - Resaltado del día actual
     - Visualización clara de días seleccionados
 - **Validación de Disponibilidad**: Verifica que el doctor no tenga otra cita en el mismo horario
+
+### Panel de Recepción
+
+- **Dashboard Centralizado**:
+    - Vista de todos los turnos del día con estados
+    - Estadísticas en tiempo real (total, pendientes, en atención, completados)
+    - Filtros por estado, fecha y búsqueda de pacientes
+- **Check-in de Pacientes**:
+    - Registro de llegada de pacientes
+    - Confirmación de turnos
+    - Vista de sala de espera con tiempos de espera calculados
+- **Alertas de Tiempo**: Resalta pacientes con más de 30 minutos de espera
+- **Vista por Médico**: Agenda individual por profesional con navegación por fecha
+
+### Sistema de Farmacia
+
+- **Gestión de Inventario**:
+    - Catálogo completo de medicamentos, insumos e instrumental
+    - Códigos únicos y categorización por tipo
+    - Control de laboratorio, lote y vencimiento
+- **Alertas Inteligentes**:
+    - Stock bajo cuando llega al mínimo configurado
+    - Próximos a vencer (30 días)
+    - Items vencidos
+    - Esterilización pendiente (7 días antes)
+- **Solicitudes Internas**:
+    - Sistema de pedidos desde consultorios/servicios
+    - Estados: pendiente, en proceso, completada, cancelada
+    - Prioridades: baja, normal, alta, urgente
+    - Entrega parcial o total de items solicitados
+- **Trazabilidad**: Historial completo de movimientos de stock con usuario y fecha
+
+### Módulo de Internación
+
+- **Gestión de Camas**:
+    - Control por habitación y capacidad
+    - Estados: disponible, ocupada, en limpieza, mantenimiento, fuera de servicio
+    - Asignación automática por disponibilidad
+- **Admisiones**:
+    - Registro de ingreso de pacientes con médico tratante
+    - Motivo de internación y observaciones
+    - Seguimiento de tiempo de estadía
+- **Evoluciones Médicas**:
+    - Registro diario de evolución clínica
+    - Estado del paciente y cambios en tratamiento
+    - Historial completo por internación
+- **Tablero de Ocupación**: Vista en tiempo real de disponibilidad de camas por habitación
+
+### Módulo de Quirófano
+
+- **Gestión de Salas**:
+    - Configuración de salas quirúrgicas con capacidad
+    - Estados: disponible, en uso, en limpieza, mantenimiento
+    - Tipos de cirugía soportados
+- **Agenda de Operaciones**:
+    - Programación de cirugías con doctor, paciente y sala
+    - Tipos: programada, urgente, emergencia
+    - Duración estimada y hora de inicio
+    - Estados: programada, en progreso, completada, cancelada
+- **Pre-Internación**:
+    - Validación de documentación pre-quirúrgica
+    - Verificación de datos del paciente
+    - Checklist de documentos requeridos
+    - Confirmación final para cirugía
+
+### Módulo de Emergencias/Guardia
+
+- **Tablero de Guardia**:
+    - Vista de todas las admisiones activas
+    - Clasificación por prioridad (crítico, urgente, estable)
+    - Estados: en espera, en atención, hospitalizado, dado de alta
+- **Triage**:
+    - Registro de motivo de consulta y urgencia
+    - Signos vitales iniciales
+    - Asignación de prioridad
+- **Evoluciones**:
+    - Seguimiento de atención en guardia
+    - Registro de tratamientos aplicados
+    - Decisión de alta o internación
+- **Métricas**: Tiempo de espera y tiempo de atención por paciente
+
+### Sistema de Contabilidad
+
+- **Cuentas Corrientes**:
+    - Una cuenta por paciente con balance real
+    - Registro de movimientos (cargos, pagos, notas de crédito/débito)
+    - Saldo actualizado automáticamente
+- **Gestión de Deudores**:
+    - Listado de pacientes con saldo pendiente
+    - Orden por antigüedad de deuda
+    - Filtros por rango de monto
+- **Pagos**:
+    - Registro de pagos con método (efectivo, tarjeta, transferencia)
+    - Aplicación automática a cuenta corriente
+    - Recibos y comprobantes
+
+### Reportes Avanzados
+
+- **Reporte C2 (REFES)**:
+    - Consultas por especialidad y médico
+    - Derivaciones y tasa de derivación
+    - Cumplimiento de normativa SSSalud
+- **Análisis Epidemiológico**:
+    - Distribución demográfica (edad, género)
+    - Enfermedades notificables
+    - Top diagnósticos del período
+- **Indicadores de Calidad**:
+    - Tiempo promedio de espera
+    - Tasa de satisfacción
+    - Productividad del equipo (utilización de agenda)
+    - Métricas de hospitalización (estadía promedio, ocupación)
+- **Análisis Financiero**:
+    - Facturación por obra social
+    - Tasa de cobranza
+    - Envejecimiento de cartera
+    - Ingresos por médico
 
 ### Dashboard Personalizado por Rol
 
@@ -318,27 +544,133 @@ El sistema está configurado para operar en **zona horaria de Argentina** (`Amer
 ```
 GestorClinico/
 ├── app/
-│   ├── Http/Controllers/     # Controladores
-│   ├── Models/               # Modelos Eloquent
-│   ├── Policies/             # Políticas de autorización
-│   └── Observers/            # Observadores de modelos
+│   ├── Http/
+│   │   ├── Controllers/          # Controladores por módulo
+│   │   │   ├── Admin/           # Administración de usuarios
+│   │   │   ├── Accounting/      # Contabilidad y cuentas corrientes
+│   │   │   ├── Emergency/       # Guardia y emergencias
+│   │   │   ├── Hospitalization/ # Internación y camas
+│   │   │   ├── Operating/       # Quirófano y operaciones
+│   │   │   ├── Pharmacy/        # Farmacia e inventario
+│   │   │   ├── Reception/       # Recepción y turnos
+│   │   │   ├── Reports/         # Reportes avanzados
+│   │   │   └── ...              # Otros módulos
+│   │   ├── Middleware/          # Middlewares de autenticación y roles
+│   │   └── Requests/            # Form Requests para validación
+│   ├── Models/                  # Modelos Eloquent
+│   │   ├── Patient.php         # Pacientes
+│   │   ├── User.php            # Usuarios/Médicos
+│   │   ├── Appointment.php     # Turnos
+│   │   ├── MedicalRecord.php   # Historias clínicas
+│   │   ├── Prescription.php    # Recetas
+│   │   ├── PharmacyItem.php    # Items de farmacia
+│   │   ├── Bed.php             # Camas
+│   │   ├── Operation.php       # Operaciones quirúrgicas
+│   │   ├── EmergencyAdmission.php  # Admisiones de guardia
+│   │   ├── CurrentAccount.php  # Cuentas corrientes
+│   │   └── ...                 # Otros modelos
+│   ├── Policies/                # Políticas de autorización
+│   ├── Observers/               # Observadores de modelos
+│   │   ├── AuditableObserver.php     # Auditoría automática
+│   │   └── PrescriptionObserver.php  # Lógica de recetas
+│   └── Services/                # Servicios especializados
+│       ├── ObrasSocialesService.php  # Integración SSSalud
+│       ├── DigitalPrescriptionService.php  # Recetas digitales
+│       └── ...
 ├── database/
-│   ├── migrations/           # Migraciones de BD
-│   ├── seeders/             # Seeders
-│   └── factories/           # Factories para testing
+│   ├── migrations/              # Migraciones de BD
+│   ├── seeders/                # Seeders de datos iniciales
+│   └── factories/              # Factories para testing
 ├── resources/
 │   ├── js/
-│   │   ├── Pages/           # Componentes Vue por módulo
-│   │   ├── Components/      # Componentes reutilizables
-│   │   └── Layouts/         # Layouts de la aplicación
+│   │   ├── Pages/              # Componentes Vue por módulo
+│   │   │   ├── Accounting/    # Contabilidad
+│   │   │   ├── Admin/         # Administración
+│   │   │   ├── Appointments/  # Turnos
+│   │   │   ├── Dashboard/     # Dashboard principal
+│   │   │   ├── Emergency/     # Guardia
+│   │   │   ├── Hospitalization/ # Internación
+│   │   │   ├── Maintenance/   # Mantenimiento
+│   │   │   ├── Operating/     # Quirófano
+│   │   │   ├── Paramedic/     # Paramédicos
+│   │   │   ├── Patients/      # Pacientes
+│   │   │   ├── Pharmacy/      # Farmacia
+│   │   │   ├── Queue/         # Cola de atención
+│   │   │   ├── Reception/     # Recepción
+│   │   │   ├── Reports/       # Reportes
+│   │   │   └── ...            # Otros módulos
+│   │   ├── Components/        # Componentes reutilizables
+│   │   ├── Layouts/           # Layouts de la aplicación
+│   │   └── types/             # Definiciones TypeScript
 │   └── views/
-│       └── prescriptions/   # Plantillas PDF de recetas
+│       └── prescriptions/     # Plantillas PDF de recetas
 ├── routes/
-│   ├── web.php             # Rutas web
-│   └── auth.php            # Rutas de autenticación
+│   ├── web.php               # Rutas web principales
+│   ├── auth.php              # Rutas de autenticación
+│   └── api.php               # API endpoints
+├── tests/
+│   ├── Feature/              # Tests de integración
+│   └── Unit/                 # Tests unitarios
+├── docs/                     # Documentación del proyecto
+│   ├── MAINTENANCE.md       # Módulo de mantenimiento
+│   ├── PARAMEDIC.md         # Módulo de paramédicos
+│   ├── HORARIOS_MEDICOS.md  # Gestión de horarios
+│   └── OBRAS_SOCIALES.md    # Integración obras sociales
 └── public/
-    └── build/              # Assets compilados
+    └── build/               # Assets compilados (Vite)
 ```
+
+## 🔗 Módulos y Rutas Principales
+
+### Módulos Clínicos
+
+| Módulo                 | Prefijo            | Descripción                             | Roles con Acceso          |
+| ---------------------- | ------------------ | --------------------------------------- | ------------------------- |
+| **Dashboard**          | `/dashboard`       | Panel principal personalizado por rol   | Todos                     |
+| **Pacientes**          | `/patients`        | Gestión de pacientes y datos personales | Admin, Doctor, Secretaria |
+| **Turnos**             | `/appointments`    | Sistema de citas y agendado             | Admin, Doctor, Secretaria |
+| **Cola de Atención**   | `/queue`           | Gestión de espera y atención            | Admin, Doctor, Secretaria |
+| **Historias Clínicas** | `/medical-records` | Registros médicos e historial           | Admin, Doctor             |
+| **Recetas**            | `/prescriptions`   | Generación y gestión de prescripciones  | Admin, Doctor             |
+
+### Módulos Hospitalarios
+
+| Módulo              | Prefijo            | Descripción                             | Roles con Acceso             |
+| ------------------- | ------------------ | --------------------------------------- | ---------------------------- |
+| **Internación**     | `/hospitalization` | Gestión de camas y pacientes internados | Admin, Enfermería            |
+| **Quirófano**       | `/operating`       | Salas y agenda quirúrgica               | Admin, Quirófano             |
+| **Pre-Internación** | `/pre-admissions`  | Validación pre-quirúrgica               | Admin, Quirófano, Secretaria |
+| **Emergencias**     | `/emergency`       | Guardia y admisiones de urgencia        | Admin, Emergencias           |
+
+### Módulos Administrativos
+
+| Módulo             | Prefijo              | Descripción                   | Roles con Acceso                |
+| ------------------ | -------------------- | ----------------------------- | ------------------------------- |
+| **Recepción**      | `/reception`         | Panel de recepción y check-in | Admin, Secretaria               |
+| **Obras Sociales** | `/health-insurances` | Gestión de coberturas médicas | Admin, Secretaria               |
+| **Farmacia**       | `/pharmacy`          | Inventario y solicitudes      | Admin, Farmacia                 |
+| **Contabilidad**   | `/accounting`        | Cuentas corrientes y pagos    | Admin, Contabilidad             |
+| **Facturación**    | `/invoices`          | Generación de facturas        | Admin, Contabilidad, Secretaria |
+| **Administración** | `/admin`             | Gestión de usuarios y roles   | Admin                           |
+
+### Módulos de Soporte
+
+| Módulo            | Prefijo        | Descripción                        | Roles con Acceso     |
+| ----------------- | -------------- | ---------------------------------- | -------------------- |
+| **Mantenimiento** | `/maintenance` | Equipos y órdenes de mantenimiento | Admin, Mantenimiento |
+| **Paramédicos**   | `/paramedic`   | Ambulancias y traslados            | Admin, Paramédico    |
+
+### Reportes
+
+| Módulo                 | Prefijo                                | Descripción                    | Roles con Acceso |
+| ---------------------- | -------------------------------------- | ------------------------------ | ---------------- |
+| **Reportes Avanzados** | `/advanced-reports`                    | Dashboard de reportes          | Admin            |
+| **Reporte C2**         | `/advanced-reports/c2`                 | Consultas y derivaciones REFES | Admin            |
+| **Epidemiología**      | `/advanced-reports/epidemiology`       | Análisis epidemiológico        | Admin            |
+| **Calidad**            | `/advanced-reports/quality-indicators` | KPIs de calidad asistencial    | Admin            |
+| **Obras Sociales**     | `/advanced-reports/insurance`          | Facturación por cobertura      | Admin            |
+| **Facturación**        | `/advanced-reports/billing`            | Análisis financiero y cobranza | Admin            |
+| **Camas**              | `/advanced-reports/bed-occupancy`      | Ocupación y utilización        | Admin            |
 
 ## 🔒 Seguridad
 
