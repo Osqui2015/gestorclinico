@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { Head, Link, useForm } from "@inertiajs/vue3";
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout.vue";
+import { computed } from "vue";
 import InputError from "@/Components/InputError.vue";
 import InputLabel from "@/Components/InputLabel.vue";
 import PrimaryButton from "@/Components/PrimaryButton.vue";
@@ -26,6 +27,8 @@ const form = useForm({
     role: "doctor",
 });
 
+const isDoctorRole = computed(() => form.role === "doctor");
+
 const submit = () => {
     form.post(route("admin.users.store"), {
         onFinish: () => form.reset("password", "password_confirmation"),
@@ -34,19 +37,17 @@ const submit = () => {
 </script>
 
 <template>
-    <Head title="Crear Doctor" />
+    <Head title="Crear Usuario" />
 
     <AuthenticatedLayout>
         <template #header>
             <div class="flex items-center justify-between">
-                <h2
-                    class="text-xl font-semibold leading-tight text-gray-800 "
-                >
-                    Crear Nuevo Doctor
+                <h2 class="text-xl font-semibold leading-tight text-gray-800">
+                    Crear Nuevo Usuario
                 </h2>
                 <Link
                     :href="route('admin.users.index')"
-                    class="inline-flex items-center rounded-md bg-gray-800 px-3 py-2 text-sm font-semibold text-white hover:bg-gray-700  "
+                    class="inline-flex items-center rounded-md bg-gray-800 px-3 py-2 text-sm font-semibold text-white hover:bg-gray-700"
                 >
                     ← Volver
                 </Link>
@@ -55,20 +56,14 @@ const submit = () => {
 
         <div class="py-12">
             <div class="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8">
-                <div class="rounded-lg bg-white shadow-sm ">
-                    <div
-                        class="border-b border-gray-200 p-6 "
-                    >
-                        <h1
-                            class="text-2xl font-bold text-gray-900 "
-                        >
-                            👨‍⚕️ Registro de Nuevo Doctor
+                <div class="rounded-lg bg-white shadow-sm">
+                    <div class="border-b border-gray-200 p-6">
+                        <h1 class="text-2xl font-bold text-gray-900">
+                            Registro de Nuevo Usuario
                         </h1>
-                        <p
-                            class="mt-2 text-sm text-gray-600 "
-                        >
-                            Completa todos los campos requeridos para crear un
-                            nuevo perfil de doctor
+                        <p class="mt-2 text-sm text-gray-600">
+                            Completa los datos para crear un nuevo perfil del
+                            sistema
                         </p>
                     </div>
 
@@ -76,7 +71,7 @@ const submit = () => {
                         <!-- Sección: Información Personal -->
                         <div class="border-b pb-6">
                             <h3
-                                class="mb-4 text-lg font-semibold text-gray-900 "
+                                class="mb-4 text-lg font-semibold text-gray-900"
                             >
                                 📋 Información Personal
                             </h3>
@@ -175,7 +170,7 @@ const submit = () => {
                                 <textarea
                                     id="address"
                                     v-model="form.address"
-                                    class="mt-1 block w-full rounded-md border-gray-300 shadow-sm   "
+                                    class="mt-1 block w-full rounded-md border-gray-300 shadow-sm"
                                     rows="2"
                                     placeholder="Av. Santa Fe 1234, CABA"
                                 ></textarea>
@@ -189,7 +184,7 @@ const submit = () => {
                         <!-- Sección: Información Profesional -->
                         <div class="border-b pb-6">
                             <h3
-                                class="mb-4 text-lg font-semibold text-gray-900 "
+                                class="mb-4 text-lg font-semibold text-gray-900"
                             >
                                 🏥 Información Profesional
                             </h3>
@@ -199,13 +194,13 @@ const submit = () => {
                                 <div>
                                     <InputLabel
                                         for="specialty"
-                                        value="Especialidad *"
+                                        :value="`Especialidad${isDoctorRole ? ' *' : ''}`"
                                     />
                                     <select
                                         id="specialty"
                                         v-model="form.specialty"
-                                        class="mt-1 block w-full rounded-md border-gray-300 shadow-sm   "
-                                        required
+                                        class="mt-1 block w-full rounded-md border-gray-300 shadow-sm"
+                                        :required="isDoctorRole"
                                     >
                                         <option value="">
                                             -- Seleccionar especialidad --
@@ -228,7 +223,7 @@ const submit = () => {
                                 <div>
                                     <InputLabel
                                         for="license_number"
-                                        value="Matrícula Nacional (M.N.) *"
+                                        :value="`Matrícula Nacional (M.N.)${isDoctorRole ? ' *' : ''}`"
                                     />
                                     <TextInput
                                         id="license_number"
@@ -236,7 +231,7 @@ const submit = () => {
                                         type="text"
                                         class="mt-1 block w-full"
                                         placeholder="123456"
-                                        required
+                                        :required="isDoctorRole"
                                     />
                                     <InputError
                                         class="mt-2"
@@ -278,7 +273,7 @@ const submit = () => {
                                     <select
                                         id="role"
                                         v-model="form.role"
-                                        class="mt-1 block w-full rounded-md border-gray-300 shadow-sm   "
+                                        class="mt-1 block w-full rounded-md border-gray-300 shadow-sm"
                                         required
                                     >
                                         <option value="doctor">
@@ -286,6 +281,30 @@ const submit = () => {
                                         </option>
                                         <option value="admin">
                                             🔐 Administrador
+                                        </option>
+                                        <option value="operating_room_manager">
+                                            🏥 Encargado de Quirófano
+                                        </option>
+                                        <option value="pharmacy">
+                                            💊 Farmacia
+                                        </option>
+                                        <option value="secretary">
+                                            🗂️ Secretaría
+                                        </option>
+                                        <option value="nurse">
+                                            🩺 Enfermería
+                                        </option>
+                                        <option value="emergency">
+                                            🚑 Guardia / Emergencias
+                                        </option>
+                                        <option value="accountant">
+                                            💼 Contabilidad
+                                        </option>
+                                        <option value="maintenance">
+                                            🔧 Mantenimiento
+                                        </option>
+                                        <option value="paramedic">
+                                            🚐 Paramédico / Ambulancia
                                         </option>
                                     </select>
                                     <InputError
@@ -299,7 +318,7 @@ const submit = () => {
                         <!-- Sección: Credenciales de Acceso -->
                         <div class="border-b pb-6">
                             <h3
-                                class="mb-4 text-lg font-semibold text-gray-900 "
+                                class="mb-4 text-lg font-semibold text-gray-900"
                             >
                                 🔒 Credenciales de Acceso
                             </h3>
@@ -355,11 +374,11 @@ const submit = () => {
                         <!-- Submit -->
                         <div class="flex gap-3 pt-4">
                             <PrimaryButton :disabled="form.processing">
-                                ✅ Crear Doctor
+                                ✅ Crear Usuario
                             </PrimaryButton>
                             <Link
                                 :href="route('admin.users.index')"
-                                class="inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50    "
+                                class="inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50"
                             >
                                 Cancelar
                             </Link>

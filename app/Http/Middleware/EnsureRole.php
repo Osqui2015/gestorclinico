@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use App\Models\User;
 use Closure;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -14,6 +15,10 @@ class EnsureRole
   public function handle(Request $request, Closure $next)
   {
     $user = Auth::user();
+
+    if ($user && !($user instanceof User)) {
+      $user = null;
+    }
 
     if (! $user) {
       abort(403, 'No autenticado.');

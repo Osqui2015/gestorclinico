@@ -38,22 +38,22 @@ class UserController extends Controller
     ];
 
     /**
-     * Display all doctors
+     * Display users managed by admin.
      */
     public function index()
     {
-        $doctors = User::whereIn('role', ['doctor', 'admin'])
+        $users = User::whereIn('role', ['doctor', 'admin', 'secretary', 'pharmacy', 'operating_room_manager', 'nurse', 'emergency', 'accountant', 'maintenance', 'paramedic'])
             ->orderBy('created_at', 'desc')
             ->paginate(10);
 
         return Inertia::render('Admin/Users/Index', [
-            'users' => $doctors,
+            'users' => $users,
             'specialties' => $this->specialties,
         ]);
     }
 
     /**
-     * Show form to create new doctor
+     * Show form to create new user
      */
     public function create()
     {
@@ -63,7 +63,7 @@ class UserController extends Controller
     }
 
     /**
-     * Store new doctor
+     * Store new user.
      */
     public function store(Request $request)
     {
@@ -72,12 +72,12 @@ class UserController extends Controller
             'dni' => 'required|string|unique:users|max:20',
             'email' => 'required|email|unique:users',
             'password' => 'required|string|min:8|confirmed',
-            'specialty' => 'required|string|max:255',
-            'license_number' => 'required|string|max:100',
+            'specialty' => 'nullable|string|max:255|required_if:role,doctor',
+            'license_number' => 'nullable|string|max:100|required_if:role,doctor',
             'professional_id' => 'nullable|string|max:100',
             'phone' => 'nullable|string|max:20',
             'address' => 'nullable|string|max:500',
-            'role' => 'required|in:doctor,admin',
+            'role' => 'required|in:doctor,admin,secretary,pharmacy,operating_room_manager,nurse,emergency,accountant,maintenance,paramedic',
         ]);
 
         User::create(array_merge($validated, [
@@ -85,11 +85,11 @@ class UserController extends Controller
         ]));
 
         return redirect()->route('admin.users.index')
-            ->with('success', 'Doctor creado exitosamente');
+            ->with('success', 'Usuario creado exitosamente');
     }
 
     /**
-     * Edit doctor
+     * Edit user.
      */
     public function edit(User $user)
     {
@@ -100,7 +100,7 @@ class UserController extends Controller
     }
 
     /**
-     * Update doctor
+     * Update user.
      */
     public function update(Request $request, User $user)
     {
@@ -108,22 +108,22 @@ class UserController extends Controller
             'name' => 'required|string|max:255',
             'dni' => 'required|string|unique:users,dni,' . $user->id . '|max:20',
             'email' => 'required|email|unique:users,email,' . $user->id,
-            'specialty' => 'required|string|max:255',
-            'license_number' => 'required|string|max:100',
+            'specialty' => 'nullable|string|max:255|required_if:role,doctor',
+            'license_number' => 'nullable|string|max:100|required_if:role,doctor',
             'professional_id' => 'nullable|string|max:100',
             'phone' => 'nullable|string|max:20',
             'address' => 'nullable|string|max:500',
-            'role' => 'required|in:doctor,admin',
+            'role' => 'required|in:doctor,admin,secretary,pharmacy,operating_room_manager,nurse,emergency,accountant,maintenance,paramedic',
         ]);
 
         $user->update($validated);
 
         return redirect()->route('admin.users.index')
-            ->with('success', 'Doctor actualizado exitosamente');
+            ->with('success', 'Usuario actualizado exitosamente');
     }
 
     /**
-     * Delete doctor
+     * Delete user.
      */
     public function destroy(User $user)
     {
@@ -135,6 +135,6 @@ class UserController extends Controller
         $user->delete();
 
         return redirect()->route('admin.users.index')
-            ->with('success', 'Doctor eliminado exitosamente');
+            ->with('success', 'Usuario eliminado exitosamente');
     }
 }

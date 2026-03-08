@@ -118,5 +118,49 @@ class DatabaseSeeder extends Seeder
                 ]);
             }
         }
+
+        // Base data for hospitalization module (rooms, beds, nurse users).
+        $this->call(HospitalizationSetupSeeder::class);
+
+        // Demo data for hospitalization module (sample hospitalizations, cleaning logs).
+        // Comment out if you don't want demo/test data in production.
+        $this->call(HospitalizationDemoSeeder::class);
+
+        // Create emergency and accountant users for testing
+        User::factory()->create([
+            'name' => 'Personal Emergencia',
+            'email' => 'emergencia@clinica.com',
+            'role' => 'emergency',
+        ]);
+
+        User::factory()->create([
+            'name' => 'Contador del Sistema',
+            'email' => 'contador@clinica.com',
+            'role' => 'accountant',
+        ]);
+
+        User::factory()->create([
+            'name' => 'Tecnico de Mantenimiento',
+            'email' => 'mantenimiento@clinica.com',
+            'role' => 'maintenance',
+        ]);
+
+        User::factory()->create([
+            'name' => 'Paramedico de Guardia',
+            'email' => 'paramedico@clinica.com',
+            'role' => 'paramedic',
+        ]);
+
+        // Demo data for emergency module
+        $this->call(EmergencyDemoSeeder::class);
+
+        // Demo data for accounting module
+        $this->call(AccountingDemoSeeder::class);
+
+        // Demo data for maintenance module
+        $this->call(MaintenanceDemoSeeder::class);
+
+        // Demo data for paramedic/ambulance module
+        $this->call(ParamedicDemoSeeder::class);
     }
 }

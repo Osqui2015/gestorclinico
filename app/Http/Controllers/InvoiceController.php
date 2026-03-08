@@ -159,6 +159,127 @@ class InvoiceController extends Controller
   }
 
   /**
+   * Show edit invoice form
+   */
+  public function edit(Invoice $invoice)
+  {
+    $invoice->load(['items', 'appointment', 'healthInsurance']);
+
+    $patients = Patient::orderBy('last_name')->orderBy('first_name')->get();
+    $healthInsurances = HealthInsurance::where('is_active', true)->orderBy('name')->get();
+
+    return Inertia::render('Invoices/Create', [
+      'patients' => $patients,
+      'healthInsurances' => $healthInsurances,
+      'appointment' => $invoice->appointment,
+      'nextInvoiceNumber' => $invoice->invoice_number,
+      'invoice' => $invoice,
+    ]);
+  }
+
+  /**
+   * Update invoice
+   */
+  public function update(Request $request, Invoice $invoice)
+  {
+    if ($invoice->status === 'paid') {
+      return back()->withErrors(['error' => 'No se puede editar una factura pagada']);
+    }
+
+    $validated = $request->validate([
+      'patient_id' => 'required|exists:patients,id',
+      'appointment_id' => 'nullable|exists:appointments,id',
+      'health_insurance_id' => 'nullable|exists:health_insurances,id',
+      'invoice_date' => 'required|date',
+      'items' => 'required|array|min:1',
+      'items.*.description' => 'required|string|max:255',
+      'items.*.quantity' => 'required|integer|min:1',
+      'items.*.unit_price' => 'required|numeric|min:0',
+      'discount' => 'nullable|numeric|min:0',
+      'insurance_coverage' => 'nullable|numeric|min:0',
+      'notes' => 'nullable|string',
+      'payment_method' => 'nullable|in:cash,card,transfer,insurance,other',
+    ]);
+
+    DB::beginTransaction();
+    try {
+      $subtotal = collect($validated['items'])->sum(function ($item) {
+        return $item['quantity'] * $item['unit_price'];
+      });
+
+      $discount = $validated['discount'] ?? 0;
+      $insuranceCoverage = $validated['insurance_coverage'] ?? 0;
+      $total = $subtotal - $discount - $insuranceCoverage;
+
+      $totalPaid = (float) $invoice->payments()->sum('amount');
+      $status = $invoice->status;
+      $paidAt = $invoice->paid_at;
+
+      if ($status !== 'cancelled') {
+        if ($totalPaid >= $total) {
+          $status = 'paid';
+          $paidAt = $paidAt ?? now();
+        } elseif ($totalPaid > 0) {
+          $status = 'partially_paid';
+          $paidAt = null;
+        } else {
+          $status = 'pending';
+          $paidAt = null;
+        }
+      }
+
+      $invoice->update([
+        'patient_id' => $validated['patient_id'],
+        'appointment_id' => $validated['appointment_id'] ?? null,
+        'health_insurance_id' => $validated['health_insurance_id'] ?? null,
+        'invoice_date' => $validated['invoice_date'],
+        'subtotal' => $subtotal,
+        'discount' => $discount,
+        'insurance_coverage' => $insuranceCoverage,
+        'total' => $total,
+        'status' => $status,
+        'paid_at' => $paidAt,
+        'payment_method' => $validated['payment_method'] ?? $invoice->payment_method,
+        'notes' => $validated['notes'] ?? null,
+      ]);
+
+      $invoice->items()->delete();
+      foreach ($validated['items'] as $item) {
+        $invoice->items()->create([
+          'description' => $item['description'],
+          'quantity' => $item['quantity'],
+          'unit_price' => $item['unit_price'],
+          'total' => $item['quantity'] * $item['unit_price'],
+        ]);
+      }
+
+      DB::commit();
+
+      return redirect()->route('invoices.show', $invoice)
+        ->with('success', 'Factura actualizada exitosamente');
+    } catch (\Exception $e) {
+      DB::rollBack();
+      return back()->withErrors(['error' => 'Error al actualizar la factura: ' . $e->getMessage()]);
+    }
+  }
+
+  /**
+   * Delete invoice
+   */
+  public function destroy(Invoice $invoice)
+  {
+    if ($invoice->payments()->exists()) {
+      return back()->withErrors(['error' => 'No se puede eliminar una factura con pagos registrados']);
+    }
+
+    $invoice->items()->delete();
+    $invoice->delete();
+
+    return redirect()->route('invoices.index')
+      ->with('success', 'Factura eliminada exitosamente');
+  }
+
+  /**
    * Add payment to invoice
    */
   public function addPayment(Request $request, Invoice $invoice)

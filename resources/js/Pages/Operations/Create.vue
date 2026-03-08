@@ -1,0 +1,601 @@
+<script setup lang="ts">
+import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout.vue";
+import { Head, Link, useForm, usePage } from "@inertiajs/vue3";
+
+interface Room {
+    id: number;
+    name: string;
+    code: string;
+}
+
+interface Doctor {
+    id: number;
+    name: string;
+    specialty?: string;
+}
+
+interface Patient {
+    id: number;
+    first_name: string;
+    last_name: string;
+    dni?: string;
+}
+
+interface PharmacyItem {
+    id: number;
+    name: string;
+    code: string;
+    unit_measurement?: string;
+    current_stock: number;
+}
+
+interface RequirementFormItem {
+    pharmacy_item_id: number | null;
+    requested_item_name: string;
+    quantity_required: number;
+    unit_measurement: string;
+    notes: string;
+}
+
+const props = defineProps<{
+    rooms: Room[];
+    doctors: Doctor[];
+    patients: Patient[];
+    pharmacyItems: PharmacyItem[];
+    defaults: {
+        doctor_id?: number | null;
+        date: string;
+        cleaning_margin_minutes: number;
+    };
+    permissions: {
+        canManage: boolean;
+    };
+}>();
+
+const page = usePage();
+const currentUser = (page.props as any).auth?.user;
+const isDoctor = currentUser?.role === "doctor";
+
+const form = useForm({
+    operation_room_id: props.rooms[0]?.id ?? null,
+    doctor_id: props.defaults.doctor_id ?? null,
+    patient_id: null as number | null,
+    operation_type: "",
+    scheduled_date: props.defaults.date,
+    scheduled_time: "08:00",
+    estimated_duration_minutes: 60,
+    urgency: "scheduled",
+    reschedule_strategy: "none",
+    clinical_notes: "",
+    pharmacy_notes: "",
+    pharmacy_items: [] as RequirementFormItem[],
+});
+
+const addRequirement = () => {
+    form.pharmacy_items.push({
+        pharmacy_item_id: null,
+        requested_item_name: "",
+        quantity_required: 1,
+        unit_measurement: "",
+        notes: "",
+    });
+};
+
+const removeRequirement = (index: number) => {
+    form.pharmacy_items.splice(index, 1);
+};
+
+const onSelectPharmacyItem = (index: number) => {
+    const requirement = form.pharmacy_items[index];
+    const selectedItem = props.pharmacyItems.find(
+        (item) => item.id === requirement.pharmacy_item_id,
+    );
+
+    if (!selectedItem) {
+        return;
+    }
+
+    if (!requirement.requested_item_name) {
+        requirement.requested_item_name = selectedItem.name;
+    }
+
+    if (!requirement.unit_measurement && selectedItem.unit_measurement) {
+        requirement.unit_measurement = selectedItem.unit_measurement;
+    }
+};
+
+const submit = () => {
+    form.transform((data) => ({
+        operation_room_id: data.operation_room_id,
+        doctor_id: data.doctor_id,
+        patient_id: data.patient_id,
+        operation_type: data.operation_type,
+        scheduled_start: `${data.scheduled_date} ${data.scheduled_time}:00`,
+        estimated_duration_minutes: data.estimated_duration_minutes,
+        urgency: data.urgency,
+        reschedule_strategy:
+            data.urgency === "emergency" ? data.reschedule_strategy : "none",
+        clinical_notes: data.clinical_notes,
+        pharmacy_notes: data.pharmacy_notes,
+        pharmacy_items: data.pharmacy_items,
+    })).post(route("operations.store"));
+};
+</script>
+
+<template>
+    <Head title="Nueva Operación" />
+
+    <AuthenticatedLayout>
+        <template #header>
+            <div class="flex flex-wrap items-center justify-between gap-3">
+                <div>
+                    <h2 class="text-2xl font-bold text-gray-900">
+                        ➕ Nueva Operación
+                    </h2>
+                    <p class="mt-1 text-sm text-gray-500">
+                        Programación de cirugía con margen automático de
+                        limpieza de
+                        {{ defaults.cleaning_margin_minutes }} minutos
+                    </p>
+                </div>
+                <Link
+                    :href="route('operations.index')"
+                    class="rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50"
+                >
+                    ← Volver a agenda
+                </Link>
+            </div>
+        </template>
+
+        <div class="py-6">
+            <div class="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8">
+                <form @submit.prevent="submit" class="space-y-6">
+                    <div class="rounded-lg bg-white p-6 shadow">
+                        <h3 class="mb-4 text-lg font-semibold text-gray-900">
+                            Datos de la operación
+                        </h3>
+                        <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
+                            <div>
+                                <label
+                                    for="operation_room_id"
+                                    class="block text-sm font-medium text-gray-700"
+                                >
+                                    Sala habilitada
+                                    <span class="text-red-500">*</span>
+                                </label>
+                                <select
+                                    id="operation_room_id"
+                                    v-model.number="form.operation_room_id"
+                                    required
+                                    class="mt-1 block w-full rounded-md border-gray-300 text-sm shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                                >
+                                    <option
+                                        v-for="room in rooms"
+                                        :key="room.id"
+                                        :value="room.id"
+                                    >
+                                        {{ room.name }} ({{ room.code }})
+                                    </option>
+                                </select>
+                                <p
+                                    v-if="form.errors.operation_room_id"
+                                    class="mt-1 text-sm text-red-600"
+                                >
+                                    {{ form.errors.operation_room_id }}
+                                </p>
+                            </div>
+
+                            <div>
+                                <label
+                                    for="doctor_id"
+                                    class="block text-sm font-medium text-gray-700"
+                                >
+                                    Médico responsable
+                                    <span class="text-red-500">*</span>
+                                </label>
+                                <select
+                                    id="doctor_id"
+                                    v-model.number="form.doctor_id"
+                                    required
+                                    :disabled="isDoctor"
+                                    class="mt-1 block w-full rounded-md border-gray-300 text-sm shadow-sm focus:border-indigo-500 focus:ring-indigo-500 disabled:bg-gray-100"
+                                >
+                                    <option :value="null">
+                                        Seleccionar médico
+                                    </option>
+                                    <option
+                                        v-for="doctor in doctors"
+                                        :key="doctor.id"
+                                        :value="doctor.id"
+                                    >
+                                        {{ doctor.name }}
+                                        <span v-if="doctor.specialty">
+                                            - {{ doctor.specialty }}
+                                        </span>
+                                    </option>
+                                </select>
+                                <p
+                                    v-if="form.errors.doctor_id"
+                                    class="mt-1 text-sm text-red-600"
+                                >
+                                    {{ form.errors.doctor_id }}
+                                </p>
+                            </div>
+
+                            <div>
+                                <label
+                                    for="patient_id"
+                                    class="block text-sm font-medium text-gray-700"
+                                >
+                                    Paciente
+                                    <span class="text-red-500">*</span>
+                                </label>
+                                <select
+                                    id="patient_id"
+                                    v-model.number="form.patient_id"
+                                    required
+                                    class="mt-1 block w-full rounded-md border-gray-300 text-sm shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                                >
+                                    <option :value="null">
+                                        Seleccionar paciente
+                                    </option>
+                                    <option
+                                        v-for="patient in patients"
+                                        :key="patient.id"
+                                        :value="patient.id"
+                                    >
+                                        {{ patient.last_name }},
+                                        {{ patient.first_name }}
+                                        <span v-if="patient.dni"
+                                            >(DNI {{ patient.dni }})</span
+                                        >
+                                    </option>
+                                </select>
+                                <p
+                                    v-if="form.errors.patient_id"
+                                    class="mt-1 text-sm text-red-600"
+                                >
+                                    {{ form.errors.patient_id }}
+                                </p>
+                            </div>
+
+                            <div>
+                                <label
+                                    for="operation_type"
+                                    class="block text-sm font-medium text-gray-700"
+                                >
+                                    Tipo de operación
+                                    <span class="text-red-500">*</span>
+                                </label>
+                                <input
+                                    id="operation_type"
+                                    v-model="form.operation_type"
+                                    type="text"
+                                    required
+                                    placeholder="Ej: Apendicectomía laparoscópica"
+                                    class="mt-1 block w-full rounded-md border-gray-300 text-sm shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                                />
+                                <p
+                                    v-if="form.errors.operation_type"
+                                    class="mt-1 text-sm text-red-600"
+                                >
+                                    {{ form.errors.operation_type }}
+                                </p>
+                            </div>
+
+                            <div>
+                                <label
+                                    for="scheduled_date"
+                                    class="block text-sm font-medium text-gray-700"
+                                >
+                                    Fecha
+                                    <span class="text-red-500">*</span>
+                                </label>
+                                <input
+                                    id="scheduled_date"
+                                    v-model="form.scheduled_date"
+                                    type="date"
+                                    required
+                                    class="mt-1 block w-full rounded-md border-gray-300 text-sm shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                                />
+                            </div>
+
+                            <div>
+                                <label
+                                    for="scheduled_time"
+                                    class="block text-sm font-medium text-gray-700"
+                                >
+                                    Hora de inicio
+                                    <span class="text-red-500">*</span>
+                                </label>
+                                <input
+                                    id="scheduled_time"
+                                    v-model="form.scheduled_time"
+                                    type="time"
+                                    required
+                                    class="mt-1 block w-full rounded-md border-gray-300 text-sm shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                                />
+                            </div>
+
+                            <div>
+                                <label
+                                    for="estimated_duration_minutes"
+                                    class="block text-sm font-medium text-gray-700"
+                                >
+                                    Duración estimada (min)
+                                    <span class="text-red-500">*</span>
+                                </label>
+                                <input
+                                    id="estimated_duration_minutes"
+                                    v-model.number="
+                                        form.estimated_duration_minutes
+                                    "
+                                    type="number"
+                                    min="15"
+                                    max="720"
+                                    required
+                                    class="mt-1 block w-full rounded-md border-gray-300 text-sm shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                                />
+                                <p
+                                    v-if="
+                                        form.errors.estimated_duration_minutes
+                                    "
+                                    class="mt-1 text-sm text-red-600"
+                                >
+                                    {{ form.errors.estimated_duration_minutes }}
+                                </p>
+                            </div>
+
+                            <div>
+                                <label
+                                    for="urgency"
+                                    class="block text-sm font-medium text-gray-700"
+                                >
+                                    Prioridad
+                                    <span class="text-red-500">*</span>
+                                </label>
+                                <select
+                                    id="urgency"
+                                    v-model="form.urgency"
+                                    required
+                                    class="mt-1 block w-full rounded-md border-gray-300 text-sm shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                                >
+                                    <option value="scheduled">
+                                        Programada
+                                    </option>
+                                    <option value="urgent">Urgente</option>
+                                    <option value="emergency">
+                                        Emergencia
+                                    </option>
+                                </select>
+                            </div>
+
+                            <div v-if="form.urgency === 'emergency'">
+                                <label
+                                    for="reschedule_strategy"
+                                    class="block text-sm font-medium text-gray-700"
+                                >
+                                    Estrategia de reprogramación
+                                </label>
+                                <select
+                                    id="reschedule_strategy"
+                                    v-model="form.reschedule_strategy"
+                                    class="mt-1 block w-full rounded-md border-gray-300 text-sm shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                                >
+                                    <option value="none">
+                                        Sin mover otras operaciones
+                                    </option>
+                                    <option value="forward">
+                                        Atrasar operaciones en conflicto
+                                    </option>
+                                    <option value="backward">
+                                        Adelantar operaciones en conflicto
+                                    </option>
+                                </select>
+                                <p
+                                    v-if="form.errors.reschedule_strategy"
+                                    class="mt-1 text-sm text-red-600"
+                                >
+                                    {{ form.errors.reschedule_strategy }}
+                                </p>
+                            </div>
+                        </div>
+
+                        <div class="mt-4 grid grid-cols-1 gap-4">
+                            <div>
+                                <label
+                                    for="clinical_notes"
+                                    class="block text-sm font-medium text-gray-700"
+                                >
+                                    Notas clínicas
+                                </label>
+                                <textarea
+                                    id="clinical_notes"
+                                    v-model="form.clinical_notes"
+                                    rows="3"
+                                    class="mt-1 block w-full rounded-md border-gray-300 text-sm shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                                    placeholder="Detalles clínicos relevantes"
+                                />
+                            </div>
+                            <div>
+                                <label
+                                    for="pharmacy_notes"
+                                    class="block text-sm font-medium text-gray-700"
+                                >
+                                    Notas para farmacia
+                                </label>
+                                <textarea
+                                    id="pharmacy_notes"
+                                    v-model="form.pharmacy_notes"
+                                    rows="2"
+                                    class="mt-1 block w-full rounded-md border-gray-300 text-sm shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                                    placeholder="Indicaciones generales de retiro/preparación"
+                                />
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="rounded-lg bg-white p-6 shadow">
+                        <div class="mb-4 flex items-center justify-between">
+                            <h3 class="text-lg font-semibold text-gray-900">
+                                Requerimientos de farmacia
+                            </h3>
+                            <button
+                                type="button"
+                                class="rounded-md bg-indigo-50 px-3 py-2 text-sm font-semibold text-indigo-700 hover:bg-indigo-100"
+                                @click="addRequirement"
+                            >
+                                + Agregar insumo
+                            </button>
+                        </div>
+
+                        <p class="mb-4 text-sm text-gray-500">
+                            El encargado de quirófano verá esta lista para
+                            coordinar el retiro.
+                        </p>
+
+                        <div
+                            v-if="form.pharmacy_items.length === 0"
+                            class="rounded-lg border border-dashed border-gray-300 p-6 text-center text-sm text-gray-500"
+                        >
+                            Sin insumos cargados.
+                        </div>
+
+                        <div v-else class="space-y-4">
+                            <div
+                                v-for="(item, index) in form.pharmacy_items"
+                                :key="index"
+                                class="rounded-lg border border-gray-200 p-4"
+                            >
+                                <div
+                                    class="grid grid-cols-1 gap-3 md:grid-cols-5"
+                                >
+                                    <div class="md:col-span-2">
+                                        <label
+                                            class="block text-xs font-medium uppercase text-gray-500"
+                                        >
+                                            Item de farmacia
+                                        </label>
+                                        <select
+                                            v-model.number="
+                                                item.pharmacy_item_id
+                                            "
+                                            class="mt-1 block w-full rounded-md border-gray-300 text-sm shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                                            @change="
+                                                onSelectPharmacyItem(index)
+                                            "
+                                        >
+                                            <option :value="null">
+                                                Manual / Sin catálogo
+                                            </option>
+                                            <option
+                                                v-for="catalogItem in pharmacyItems"
+                                                :key="catalogItem.id"
+                                                :value="catalogItem.id"
+                                            >
+                                                {{ catalogItem.name }} ({{
+                                                    catalogItem.code
+                                                }}) - Stock:
+                                                {{ catalogItem.current_stock }}
+                                            </option>
+                                        </select>
+                                    </div>
+
+                                    <div class="md:col-span-2">
+                                        <label
+                                            class="block text-xs font-medium uppercase text-gray-500"
+                                        >
+                                            Nombre solicitado
+                                        </label>
+                                        <input
+                                            v-model="item.requested_item_name"
+                                            type="text"
+                                            class="mt-1 block w-full rounded-md border-gray-300 text-sm shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                                            placeholder="Ej: Set de sutura"
+                                        />
+                                    </div>
+
+                                    <div>
+                                        <label
+                                            class="block text-xs font-medium uppercase text-gray-500"
+                                        >
+                                            Cantidad
+                                        </label>
+                                        <input
+                                            v-model.number="
+                                                item.quantity_required
+                                            "
+                                            type="number"
+                                            min="1"
+                                            class="mt-1 block w-full rounded-md border-gray-300 text-sm shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                                        />
+                                    </div>
+
+                                    <div>
+                                        <label
+                                            class="block text-xs font-medium uppercase text-gray-500"
+                                        >
+                                            Unidad
+                                        </label>
+                                        <input
+                                            v-model="item.unit_measurement"
+                                            type="text"
+                                            class="mt-1 block w-full rounded-md border-gray-300 text-sm shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                                            placeholder="unidad"
+                                        />
+                                    </div>
+
+                                    <div class="md:col-span-3">
+                                        <label
+                                            class="block text-xs font-medium uppercase text-gray-500"
+                                        >
+                                            Notas
+                                        </label>
+                                        <input
+                                            v-model="item.notes"
+                                            type="text"
+                                            class="mt-1 block w-full rounded-md border-gray-300 text-sm shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                                            placeholder="Ej: material estéril"
+                                        />
+                                    </div>
+
+                                    <div
+                                        class="flex items-end justify-end md:col-span-1"
+                                    >
+                                        <button
+                                            type="button"
+                                            class="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm font-semibold text-red-700 hover:bg-red-100"
+                                            @click="removeRequirement(index)"
+                                        >
+                                            Eliminar
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="flex justify-end gap-3">
+                        <Link
+                            :href="route('operations.index')"
+                            class="rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50"
+                        >
+                            Cancelar
+                        </Link>
+                        <button
+                            type="submit"
+                            :disabled="form.processing"
+                            class="rounded-md bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-500 disabled:cursor-not-allowed disabled:opacity-50"
+                        >
+                            {{
+                                form.processing
+                                    ? "Guardando..."
+                                    : "Programar operación"
+                            }}
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </AuthenticatedLayout>
+</template>

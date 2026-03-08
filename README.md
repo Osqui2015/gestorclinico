@@ -34,7 +34,7 @@ Sistema integral de gestión para consultorios y clínicas médicas desarrollado
     - **Filtrado automático por doctor** - cada doctor ve su propia agenda por defecto
     - Navegación por mes con corrección de zona horaria
     - Resumen de citas pendientes del día
-- 🔐 **Control de Acceso**: Sistema de roles (Administrador, Doctor, Secretaria)
+- 🔐 **Control de Acceso**: Sistema de roles (Administrador, Doctor, Secretaria, Farmacia, Encargado de Quirófano, Enfermería, Emergencias, Contabilidad, Mantenimiento, Paramédico)
 - 📊 **Auditoría**: Registro automático de cambios en entidades críticas
 - 🌍 **Zona Horaria**: Configurado para **Argentina (UTC-3)** - horarios locales correctos
 
@@ -223,6 +223,42 @@ El sistema está configurado para operar en **zona horaria de Argentina** (`Amer
 - Creación y gestión de turnos
 - Gestión de cola de atención
 - Facturación básica
+
+### Farmacia
+
+- Gestión de inventario de medicamentos, insumos e instrumental
+- Procesamiento de solicitudes internas
+- Control de stock, vencimientos y esterilización
+
+### Encargado de Quirófano
+
+- Configuración de salas quirúrgicas
+- Gestión de agenda de operaciones y disponibilidad de salas
+
+### Enfermería
+
+- Gestión de internaciones y seguimiento de camas
+- Registro operativo de limpieza de camas
+
+### Emergencias
+
+- Gestión del tablero de guardia y evoluciones
+- Seguimiento de admisiones y cambios de estado
+
+### Contabilidad
+
+- Gestión de cuentas corrientes y movimientos financieros
+- Seguimiento de deudores y exportes contables
+
+### Mantenimiento
+
+- Gestión de equipos médicos
+- Registro y seguimiento de órdenes de mantenimiento
+
+### Paramédico
+
+- Gestión de móviles/ambulancias
+- Registro y seguimiento de traslados
 
 ## 📄 Funcionalidades Destacadas
 

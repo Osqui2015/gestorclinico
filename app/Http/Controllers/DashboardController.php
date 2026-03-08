@@ -15,6 +15,11 @@ class DashboardController extends Controller
   {
     $user = $request->user();
 
+    // Redirect pharmacy users to pharmacy dashboard
+    if ($user->role === 'pharmacy') {
+      return redirect()->route('pharmacy.dashboard');
+    }
+
     // Get appointments for the authenticated user
     // If doctor, get their appointments; if admin, get all
     if ($user->isAdmin()) {

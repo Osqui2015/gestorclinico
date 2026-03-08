@@ -93,6 +93,40 @@ class Patient extends Model
     }
 
     /**
+     * Get operations for this patient.
+     */
+    public function operations(): HasMany
+    {
+        return $this->hasMany(Operation::class);
+    }
+
+    /**
+     * Get pre-admissions for this patient.
+     */
+    public function preAdmissions(): HasMany
+    {
+        return $this->hasMany(PreAdmission::class);
+    }
+
+    /**
+     * Get hospitalizations for this patient.
+     */
+    public function hospitalizations(): HasMany
+    {
+        return $this->hasMany(Hospitalization::class);
+    }
+
+    /**
+     * Get current active hospitalization.
+     */
+    public function currentHospitalization()
+    {
+        return $this->hasOne(Hospitalization::class)
+            ->where('status', Hospitalization::STATUS_ACTIVE)
+            ->latestOfMany();
+    }
+
+    /**
      * Get full name
      */
     public function getFullNameAttribute(): string
@@ -125,5 +159,21 @@ class Patient extends Model
             return [];
         }
         return array_map('trim', explode(',', $this->allergies));
+    }
+
+    /**
+     * Get patient account (cuentas corrientes)
+     */
+    public function account()
+    {
+        return $this->hasOne(PatientAccount::class);
+    }
+
+    /**
+     * Get emergency admissions for this patient.
+     */
+    public function emergencyAdmissions(): HasMany
+    {
+        return $this->hasMany(EmergencyAdmission::class);
     }
 }

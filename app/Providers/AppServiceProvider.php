@@ -10,6 +10,7 @@ use App\Models\Patient;
 use App\Models\Prescription;
 use App\Observers\AuditableObserver;
 use App\Observers\PrescriptionObserver;
+use App\Observers\PatientObserver;
 use App\Models\User;
 
 class AppServiceProvider extends ServiceProvider
@@ -34,6 +35,9 @@ class AppServiceProvider extends ServiceProvider
         Appointment::observe(AuditableObserver::class);
         Patient::observe(AuditableObserver::class);
         User::observe(AuditableObserver::class);
+
+        // Register patient observer for account creation
+        Patient::observe(PatientObserver::class);
 
         // Register prescription observer for ReNaPDiS compliance and audit trail
         Prescription::observe(PrescriptionObserver::class);

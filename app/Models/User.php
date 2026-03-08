@@ -146,4 +146,84 @@ class User extends Authenticatable
     {
         return $this->role === 'secretary';
     }
+
+    /**
+     * Check if user is pharmacy staff.
+     */
+    public function isPharmacy(): bool
+    {
+        return $this->role === 'pharmacy';
+    }
+
+    /**
+     * Check if user is operating room manager.
+     */
+    public function isOperatingRoomManager(): bool
+    {
+        return $this->role === 'operating_room_manager';
+    }
+
+    /**
+     * Operations assigned as doctor.
+     */
+    public function operationsAsDoctor(): HasMany
+    {
+        return $this->hasMany(Operation::class, 'doctor_id');
+    }
+
+    /**
+     * Operations created by this user.
+     */
+    public function operationsCreated(): HasMany
+    {
+        return $this->hasMany(Operation::class, 'created_by');
+    }
+
+    /**
+     * Operations updated by this user.
+     */
+    public function operationsUpdated(): HasMany
+    {
+        return $this->hasMany(Operation::class, 'updated_by');
+    }
+
+    /**
+     * Pre-admissions assigned to this secretary.
+     */
+    public function preAdmissionsAssigned(): HasMany
+    {
+        return $this->hasMany(PreAdmission::class, 'secretary_id');
+    }
+
+    /**
+     * Hospitalizations where this doctor is responsible.
+     */
+    public function hospitalizationsAsDoctor(): HasMany
+    {
+        return $this->hasMany(Hospitalization::class, 'doctor_id');
+    }
+
+    /**
+     * Check if user is nurse/hospitalization staff.
+     */
+    public function isNurse(): bool
+    {
+        return $this->role === 'nurse';
+    }
+
+    /**
+     * Check if user is maintenance staff.
+     */
+    public function isMaintenance(): bool
+    {
+        return $this->role === 'maintenance';
+    }
+
+    /**
+     * Check if user is paramedic staff.
+     */
+    public function isParamedic(): bool
+    {
+        return $this->role === 'paramedic';
+    }
 }

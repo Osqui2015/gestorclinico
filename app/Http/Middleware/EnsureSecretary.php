@@ -2,8 +2,10 @@
 
 namespace App\Http\Middleware;
 
+use App\Models\User;
 use Closure;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 
 class EnsureSecretary
 {
@@ -12,7 +14,11 @@ class EnsureSecretary
    */
   public function handle(Request $request, Closure $next)
   {
-    $user = auth()->user();
+    $user = Auth::user();
+
+    if ($user && !($user instanceof User)) {
+      $user = null;
+    }
 
     if (!$user) {
       abort(403, 'No autenticado.');

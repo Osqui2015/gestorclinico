@@ -5,10 +5,17 @@ import Dropdown from "@/Components/Dropdown.vue";
 import DropdownLink from "@/Components/DropdownLink.vue";
 
 const page = usePage();
-const user = page.props.auth?.user;
+const user = page.props.auth?.user as any;
 const isDoctor = user?.role === "doctor";
 const isAdmin = user?.role === "admin";
 const isSecretary = user?.role === "secretary";
+const isPharmacy = user?.role === "pharmacy";
+const isOperatingRoomManager = user?.role === "operating_room_manager";
+const isNurse = user?.role === "nurse";
+const isEmergency = user?.role === "emergency";
+const isAccountant = user?.role === "accountant";
+const isMaintenance = user?.role === "maintenance";
+const isParamedic = user?.role === "paramedic";
 
 const mobileMenuOpen = ref(false);
 
@@ -20,6 +27,7 @@ const menuItems = [
 
 const secretaryItems = [
     { label: "Gestión de Turnos", href: "secretary.turns.index", icon: "📋" },
+    { label: "Pre-Internación", href: "pre-admissions.index", icon: "🟢" },
 ];
 
 const doctorItems = [
@@ -27,17 +35,90 @@ const doctorItems = [
     { label: "Reportes", href: "doctor.reports", icon: "📊" },
     { label: "Horarios", href: "doctor-schedules.index", icon: "🕐" },
     { label: "Excepciones", href: "doctor-exceptions.index", icon: "🚫" },
+    {
+        label: "Solicitudes Farmacia",
+        href: "pharmacy-requests.my-requests",
+        icon: "💊",
+    },
+    { label: "Quirófanos", href: "operations.index", icon: "🏥" },
+    { label: "Nueva Operación", href: "operations.create", icon: "➕" },
+    { label: "Internación", href: "hospitalizations.index", icon: "🛏️" },
+];
+
+const nurseItems = [
+    { label: "Gestión de Camas", href: "hospitalizations.index", icon: "🛏️" },
+    { label: "Nueva Internación", href: "hospitalizations.create", icon: "➕" },
+    { label: "Historial", href: "hospitalizations.history", icon: "📋" },
+];
+
+const emergencyItems = [
+    { label: "Guardia", href: "emergency.board", icon: "🚑" },
+    { label: "Nueva Admisión", href: "emergency.create", icon: "➕" },
+    { label: "Historial ER", href: "emergency.history", icon: "📄" },
+];
+
+const accountantItems = [
+    { label: "Cuentas", href: "accounting.dashboard", icon: "💼" },
+    {
+        label: "Pacientes Cuenta",
+        href: "accounting.index",
+        icon: "📒",
+    },
+    { label: "Deudores", href: "accounting.debtors", icon: "📉" },
+];
+
+const maintenanceItems = [
+    { label: "Mantenimiento", href: "maintenance.index", icon: "🔧" },
+];
+
+const paramedicItems = [
+    { label: "Traslados", href: "paramedic.dashboard", icon: "🚐" },
+];
+
+const pharmacyItems = [
+    { label: "Dashboard", href: "pharmacy.dashboard", icon: "💊" },
+    { label: "Inventario", href: "pharmacy.items.index", icon: "📦" },
+    { label: "Solicitudes", href: "pharmacy.requests.index", icon: "📋" },
+];
+
+const operatingRoomManagerItems = [
+    { label: "Agenda Quirófanos", href: "operations.index", icon: "🏥" },
+    { label: "Nueva Operación", href: "operations.create", icon: "➕" },
+    {
+        label: "Salas Quirófano",
+        href: "operations.rooms.settings",
+        icon: "⚙️",
+    },
 ];
 
 const adminItems = [
     { label: "Auditoría", href: "admin.audits.index", icon: "📋" },
     { label: "Doctores", href: "admin.users.index", icon: "👨‍⚕️" },
     { label: "Tablero de Colas", href: "admin.queues.index", icon: "🏥" },
+    { label: "Emergencias", href: "emergency.board", icon: "🚑" },
+    { label: "Cuentas", href: "accounting.dashboard", icon: "💼" },
+    { label: "Mantenimiento", href: "maintenance.index", icon: "🔧" },
+    { label: "Paramédicos", href: "paramedic.dashboard", icon: "🚐" },
+    { label: "Internación", href: "hospitalizations.index", icon: "🛏️" },
+    { label: "Pre-Internación", href: "pre-admissions.index", icon: "🟢" },
+    { label: "Quirófanos", href: "operations.index", icon: "🏥" },
+    {
+        label: "Salas Quirófano",
+        href: "operations.rooms.settings",
+        icon: "⚙️",
+    },
 ];
 
 const visibleItems = [
     ...(isDoctor ? doctorItems : []),
-    ...menuItems,
+    ...(isEmergency ? emergencyItems : []),
+    ...(isParamedic ? paramedicItems : []),
+    ...(isMaintenance ? maintenanceItems : []),
+    ...(isAccountant ? accountantItems : []),
+    ...(isPharmacy ? pharmacyItems : []),
+    ...(isNurse ? nurseItems : []),
+    ...(isOperatingRoomManager ? operatingRoomManagerItems : []),
+    ...(!isPharmacy ? menuItems : []),
     ...(isSecretary ? secretaryItems : []),
     ...(isAdmin ? adminItems : []),
 ];
@@ -57,6 +138,13 @@ const getRoleLabel = (role: string) => {
         doctor: "Doctor",
         admin: "Admin",
         secretary: "Secretaria",
+        nurse: "Enfermero/a",
+        pharmacy: "Farmacéutico",
+        operating_room_manager: "Encargado Quirófano",
+        emergency: "Guardia",
+        accountant: "Contabilidad",
+        maintenance: "Mantenimiento",
+        paramedic: "Paramédico",
     };
     return labels[role] || role;
 };
