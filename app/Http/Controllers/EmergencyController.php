@@ -262,8 +262,29 @@ class EmergencyController extends Controller
   {
     $admission->load(['patient', 'attendingDoctor', 'nurse', 'evolutions.recordedBy']);
 
+    // Obtener historial médico del paciente
+    $medicalHistory = [];
+    if ($admission->patient && method_exists($admission->patient, 'medicalRecords')) {
+      $medicalHistory = $admission->patient->medicalRecords()
+        ->with('doctor')
+        ->latest()
+        ->take(10)
+        ->get()
+        ->map(function ($record) {
+          return [
+            'id' => $record->id,
+            'created_at' => $record->created_at->toIso8601String(),
+            'reason' => $record->reason,
+            'diagnosis' => $record->diagnosis,
+            'treatment' => $record->treatment,
+            'doctor_name' => $record->doctor->name ?? 'N/A',
+          ];
+        })->toArray();
+    }
+
     return Inertia::render('Emergency/Show', [
       'admission' => $this->mapAdmissionForUi($admission, true),
+      'medicalHistory' => $medicalHistory,
     ]);
   }
 
@@ -422,6 +443,7 @@ class EmergencyController extends Controller
       'status' => 'required|in:waiting,in_care,observation,discharged,admitted,transferred',
       'discharge_diagnosis' => 'required_if:status,discharged|nullable|string',
       'discharge_instructions' => 'required_if:status,discharged|nullable|string',
+      'save_to_history' => 'boolean',
     ]);
 
     $data = ['status' => $validated['status']];
@@ -430,11 +452,147 @@ class EmergencyController extends Controller
       $data['discharged_at'] = now();
       $data['discharge_diagnosis'] = $validated['discharge_diagnosis'] ?? null;
       $data['discharge_instructions'] = $validated['discharge_instructions'] ?? null;
+
+      // Guardar automáticamente en historial médico si se especifica
+      if ($validated['save_to_history'] ?? true) {
+        $this->saveToMedicalHistory($admission, $validated['discharge_diagnosis'], $validated['discharge_instructions']);
+      }
     }
 
     $admission->update($data);
 
     return back()->with('success', 'Estado actualizado');
+  }
+
+  /**
+   * Guardar consulta de emergencia en historial médico
+   */
+  private function saveToMedicalHistory(EmergencyAdmission $admission, ?string $diagnosis, ?string $instructions): void
+  {
+    $user = $this->authUser();
+
+    // Compilar información de la consulta de emergencia
+    $treatment = [];
+    if ($admission->treatment_given) {
+      $treatment[] = "Tratamiento: " . $admission->treatment_given;
+    }
+    if ($instructions) {
+      $treatment[] = "Instrucciones: " . $instructions;
+    }
+    if ($admission->evolutions->count() > 0) {
+      $treatment[] = "\nEvoluciones (" . $admission->evolutions->count() . " registradas)";
+    }
+
+    \App\Models\MedicalRecord::create([
+      'patient_id' => $admission->patient_id,
+      'doctor_id' => $admission->attending_doctor_id ?? $user->id,
+      'reason' => "EMERGENCIA: " . $admission->chief_complaint,
+      'diagnosis' => $diagnosis ?? $admission->preliminary_diagnosis,
+      'treatment' => implode("\n", $treatment),
+      'private_notes' => "Atención de emergencia. Triage nivel " . $admission->triage_level . ". " . ($admission->observations ?? ''),
+      'is_first_consultation' => false,
+    ]);
+  }
+
+  /**
+   * Crear receta desde emergencia
+   */
+  public function createPrescription(Request $request, EmergencyAdmission $admission)
+  {
+    $validated = $request->validate([
+      'medication_name' => 'required|string|max:255',
+      'dosage' => 'required|string|max:255',
+      'instructions' => 'nullable|string',
+      'quantity' => 'nullable|string|max:100',
+      'duration' => 'nullable|string|max:100',
+    ]);
+
+    $user = $this->authUser();
+
+    $prescription = \App\Models\Prescription::create([
+      'patient_id' => $admission->patient_id,
+      'doctor_id' => $admission->attending_doctor_id ?? $user->id,
+      'medication_name' => $validated['medication_name'],
+      'dosage' => $validated['dosage'],
+      'instructions' => $validated['instructions'] ?? null,
+      'quantity' => $validated['quantity'] ?? null,
+      'duration' => $validated['duration'] ?? null,
+      'issued_at' => now(),
+    ]);
+
+    return back()->with('success', 'Receta creada exitosamente');
+  }
+
+  /**
+   * Solicitar medicación a farmacia desde emergencia
+   */
+  public function requestPharmacy(Request $request, EmergencyAdmission $admission)
+  {
+    $validated = $request->validate([
+      'pharmacy_item_id' => 'required|exists:pharmacy_items,id',
+      'quantity' => 'required|integer|min:1',
+      'notes' => 'nullable|string',
+      'urgency' => 'required|in:normal,urgent,emergency',
+    ]);
+
+    $user = $this->authUser();
+
+    $pharmacyRequest = \App\Models\PharmacyRequest::create([
+      'doctor_id' => $admission->attending_doctor_id ?? $user->id,
+      'patient_id' => $admission->patient_id,
+      'pharmacy_item_id' => $validated['pharmacy_item_id'],
+      'quantity' => $validated['quantity'],
+      'notes' => "EMERGENCIA - " . ($validated['notes'] ?? $admission->chief_complaint),
+      'urgency' => $validated['urgency'],
+      'status' => 'pending',
+      'requested_at' => now(),
+    ]);
+
+    return back()->with('success', 'Solicitud a farmacia enviada');
+  }
+
+  /**
+   * Internar paciente desde emergencia
+   */
+  public function admitToHospital(Request $request, EmergencyAdmission $admission)
+  {
+    $validated = $request->validate([
+      'bed_id' => 'required|exists:beds,id',
+      'admission_diagnosis' => 'required|string',
+      'treatment_plan' => 'nullable|string',
+      'expected_stay_days' => 'nullable|integer|min:1',
+    ]);
+
+    $user = $this->authUser();
+
+    // Verificar que la cama esté disponible
+    $bed = \App\Models\Bed::findOrFail($validated['bed_id']);
+    if ($bed->status !== \App\Models\Bed::STATUS_AVAILABLE) {
+      return back()->with('error', 'La cama seleccionada no está disponible');
+    }
+
+    // Crear internación
+    $hospitalization = \App\Models\Hospitalization::create([
+      'patient_id' => $admission->patient_id,
+      'bed_id' => $validated['bed_id'],
+      'doctor_id' => $admission->attending_doctor_id ?? $user->id,
+      'admission_date' => now(),
+      'admission_diagnosis' => $validated['admission_diagnosis'],
+      'treatment_plan' => $validated['treatment_plan'] ?? null,
+      'expected_discharge_date' => $validated['expected_stay_days']
+        ? now()->addDays($validated['expected_stay_days'])
+        : null,
+      'observations' => "Ingreso desde emergencia. Triage: " . $admission->getTriageLevelName(),
+    ]);
+
+    // Actualizar estado de la cama
+    $bed->update(['status' => \App\Models\Bed::STATUS_OCCUPIED]);
+
+    // Actualizar estado de la admisión de emergencia
+    $admission->update(['status' => 'admitted']);
+
+    return redirect()->route('hospitalizations.show', $bed->id)
+      ->with('success', 'Paciente internado exitosamente');
   }
 
   /**

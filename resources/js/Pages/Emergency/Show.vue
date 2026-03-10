@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref } from "vue";
-import { Head, router } from "@inertiajs/vue3";
+import { Head, router, useForm } from "@inertiajs/vue3";
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout.vue";
 
 interface Patient {
@@ -32,6 +32,15 @@ interface EmergencyEvolution {
     recorded_by: User;
 }
 
+interface MedicalRecord {
+    id: number;
+    created_at: string;
+    reason: string;
+    diagnosis: string;
+    treatment: string;
+    doctor_name: string;
+}
+
 interface EmergencyAdmission {
     id: number;
     admission_time: string;
@@ -53,14 +62,37 @@ interface EmergencyAdmission {
     observations: string | null;
     patient: Patient;
     attending_doctor: User;
-    evolutions: EmergencyEvolution[];
+    evolutions?: EmergencyEvolution[];
 }
 
 interface Props {
     admission: EmergencyAdmission;
+    medicalHistory?: MedicalRecord[];
 }
 
-const props = defineProps<Props>();
+const props = withDefaults(defineProps<Props>(), {
+    medicalHistory: () => [],
+});
+
+const showDischargeModal = ref(false);
+const showPrescriptionModal = ref(false);
+const showPharmacyModal = ref(false);
+const showAdmitModal = ref(false);
+
+const dischargeForm = useForm({
+    status: "discharged",
+    discharge_diagnosis: "",
+    discharge_instructions: "",
+    save_to_history: true,
+});
+
+const prescriptionForm = useForm({
+    medication_name: "",
+    dosage: "",
+    instructions: "",
+    quantity: "",
+    duration: "",
+});
 
 const triageLevels: Record<
     number,
@@ -106,6 +138,37 @@ const addEvolution = () => {
     router.get(route("emergency.evolution", props.admission.id));
 };
 
+const changeStatus = (newStatus: string) => {
+    router.patch(
+        route("emergency.change-status", props.admission.id),
+        { status: newStatus },
+        { preserveScroll: true },
+    );
+};
+
+const submitDischarge = () => {
+    dischargeForm.patch(route("emergency.change-status", props.admission.id), {
+        preserveScroll: true,
+        onSuccess: () => {
+            showDischargeModal.value = false;
+            dischargeForm.reset();
+        },
+    });
+};
+
+const submitPrescription = () => {
+    prescriptionForm.post(
+        route("emergency.create-prescription", props.admission.id),
+        {
+            preserveScroll: true,
+            onSuccess: () => {
+                showPrescriptionModal.value = false;
+                prescriptionForm.reset();
+            },
+        },
+    );
+};
+
 const formatDuration = (admissionTime: string, dischargedAt: string | null) => {
     const start = new Date(admissionTime);
     const end = dischargedAt ? new Date(dischargedAt) : new Date();
@@ -135,22 +198,55 @@ const formatDuration = (admissionTime: string, dischargedAt: string | null) => {
                         }}
                     </p>
                 </div>
-                <div class="flex gap-3">
+                <div class="flex flex-wrap gap-2">
+                    <!-- Acciones según estado -->
                     <button
+                        v-if="
+                            admission.status === 'waiting' ||
+                            admission.status === 'in_care'
+                        "
                         @click="addEvolution"
-                        class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition"
+                        class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition text-sm"
                     >
                         ➕ Evolución
                     </button>
                     <button
+                        v-if="admission.status === 'waiting'"
+                        @click="changeStatus('in_care')"
+                        class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition text-sm"
+                    >
+                        🩺 Iniciar Atención
+                    </button>
+                    <button
+                        v-if="admission.status === 'in_care'"
+                        @click="showPrescriptionModal = true"
+                        class="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition text-sm"
+                    >
+                        💊 Receta
+                    </button>
+                    <button
+                        v-if="admission.status === 'in_care'"
+                        @click="showDischargeModal = true"
+                        class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition text-sm"
+                    >
+                        ✅ Dar de Alta
+                    </button>
+                    <button
+                        v-if="admission.status === 'in_care'"
+                        @click="changeStatus('observation')"
+                        class="px-4 py-2 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700 transition text-sm"
+                    >
+                        👁️ A Observación
+                    </button>
+                    <button
                         @click="editAdmission"
-                        class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
+                        class="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition text-sm"
                     >
                         ✏️ Editar
                     </button>
                     <button
                         @click="goBack"
-                        class="px-4 py-2 bg-gray-300 text-gray-900 rounded-lg hover:bg-gray-400 transition"
+                        class="px-4 py-2 bg-gray-300 text-gray-900 rounded-lg hover:bg-gray-400 transition text-sm"
                     >
                         ← Volver
                     </button>
@@ -362,7 +458,10 @@ const formatDuration = (admissionTime: string, dischargedAt: string | null) => {
                     Historial de Evolución
                 </h2>
                 <div
-                    v-if="admission.evolutions.length === 0"
+                    v-if="
+                        !admission.evolutions ||
+                        admission.evolutions.length === 0
+                    "
                     class="text-center text-gray-500 py-8"
                 >
                     No hay registros de evolución
@@ -427,6 +526,244 @@ const formatDuration = (admissionTime: string, dischargedAt: string | null) => {
                             Tratamiento: {{ evolution.treatment_notes }}
                         </p>
                     </div>
+                </div>
+            </div>
+
+            <!-- Medical History Section -->
+            <div class="mt-8 bg-white rounded-lg shadow-md p-6">
+                <h2 class="text-lg font-semibold text-gray-900 mb-4">
+                    📋 Historial Médico del Paciente
+                </h2>
+                <div
+                    v-if="medicalHistory.length === 0"
+                    class="text-center text-gray-500 py-8"
+                >
+                    No hay consultas médicas previas registradas
+                </div>
+                <div v-else class="space-y-4">
+                    <div
+                        v-for="record in medicalHistory"
+                        :key="record.id"
+                        class="border-l-4 border-green-500 pl-4 py-3 bg-green-50 rounded"
+                    >
+                        <div class="flex justify-between items-start mb-2">
+                            <p class="font-semibold text-gray-900">
+                                {{
+                                    new Date(record.created_at).toLocaleString(
+                                        "es-AR",
+                                    )
+                                }}
+                            </p>
+                            <p class="text-sm text-gray-600">
+                                Dr. {{ record.doctor_name }}
+                            </p>
+                        </div>
+                        <div class="space-y-2 text-sm">
+                            <div>
+                                <span class="font-semibold text-gray-700"
+                                    >Motivo:</span
+                                >
+                                <span class="text-gray-900">{{
+                                    record.reason
+                                }}</span>
+                            </div>
+                            <div>
+                                <span class="font-semibold text-gray-700"
+                                    >Diagnóstico:</span
+                                >
+                                <span class="text-gray-900">{{
+                                    record.diagnosis
+                                }}</span>
+                            </div>
+                            <div>
+                                <span class="font-semibold text-gray-700"
+                                    >Tratamiento:</span
+                                >
+                                <span class="text-gray-900">{{
+                                    record.treatment
+                                }}</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Modals -->
+            <!-- Discharge Modal -->
+            <div
+                v-if="showDischargeModal"
+                class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4"
+                @click.self="showDischargeModal = false"
+            >
+                <div
+                    class="w-full max-w-2xl rounded-lg bg-white p-6 shadow-xl"
+                    @click.stop
+                >
+                    <h3 class="mb-4 text-xl font-bold text-gray-900">
+                        Dar de Alta al Paciente
+                    </h3>
+                    <form @submit.prevent="submitDischarge" class="space-y-4">
+                        <div>
+                            <label
+                                class="block text-sm font-medium text-gray-700 mb-2"
+                            >
+                                Diagnóstico de Alta *
+                            </label>
+                            <textarea
+                                v-model="dischargeForm.discharge_diagnosis"
+                                rows="3"
+                                required
+                                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                                placeholder="Diagnóstico final del paciente"
+                            ></textarea>
+                        </div>
+                        <div>
+                            <label
+                                class="block text-sm font-medium text-gray-700 mb-2"
+                            >
+                                Instrucciones de Alta *
+                            </label>
+                            <textarea
+                                v-model="dischargeForm.discharge_instructions"
+                                rows="4"
+                                required
+                                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                                placeholder="Indicaciones para el paciente, medicación, controles, etc."
+                            ></textarea>
+                        </div>
+                        <div class="flex items-center">
+                            <input
+                                v-model="dischargeForm.save_to_history"
+                                type="checkbox"
+                                class="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+                            />
+                            <label class="ml-2 block text-sm text-gray-700">
+                                Guardar en historial médico del paciente
+                            </label>
+                        </div>
+                        <div class="flex justify-end gap-2 pt-4">
+                            <button
+                                type="button"
+                                @click="showDischargeModal = false"
+                                class="rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50"
+                            >
+                                Cancelar
+                            </button>
+                            <button
+                                type="submit"
+                                :disabled="dischargeForm.processing"
+                                class="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-500 disabled:cursor-not-allowed disabled:opacity-50"
+                            >
+                                Confirmar Alta
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Prescription Modal -->
+            <div
+                v-if="showPrescriptionModal"
+                class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4"
+                @click.self="showPrescriptionModal = false"
+            >
+                <div
+                    class="w-full max-w-2xl rounded-lg bg-white p-6 shadow-xl"
+                    @click.stop
+                >
+                    <h3 class="mb-4 text-xl font-bold text-gray-900">
+                        Crear Receta
+                    </h3>
+                    <form
+                        @submit.prevent="submitPrescription"
+                        class="space-y-4"
+                    >
+                        <div>
+                            <label
+                                class="block text-sm font-medium text-gray-700 mb-2"
+                            >
+                                Medicamento *
+                            </label>
+                            <input
+                                v-model="prescriptionForm.medication_name"
+                                type="text"
+                                required
+                                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                                placeholder="Nombre del medicamento"
+                            />
+                        </div>
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label
+                                    class="block text-sm font-medium text-gray-700 mb-2"
+                                >
+                                    Dosis *
+                                </label>
+                                <input
+                                    v-model="prescriptionForm.dosage"
+                                    type="text"
+                                    required
+                                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                                    placeholder="Ej: 500mg"
+                                />
+                            </div>
+                            <div>
+                                <label
+                                    class="block text-sm font-medium text-gray-700 mb-2"
+                                >
+                                    Cantidad
+                                </label>
+                                <input
+                                    v-model="prescriptionForm.quantity"
+                                    type="text"
+                                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                                    placeholder="Ej: 1 caja"
+                                />
+                            </div>
+                        </div>
+                        <div>
+                            <label
+                                class="block text-sm font-medium text-gray-700 mb-2"
+                            >
+                                Instrucciones
+                            </label>
+                            <textarea
+                                v-model="prescriptionForm.instructions"
+                                rows="3"
+                                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                                placeholder="Cada 8 horas por vía oral con alimentos"
+                            ></textarea>
+                        </div>
+                        <div>
+                            <label
+                                class="block text-sm font-medium text-gray-700 mb-2"
+                            >
+                                Duración
+                            </label>
+                            <input
+                                v-model="prescriptionForm.duration"
+                                type="text"
+                                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                                placeholder="Ej: 7 días"
+                            />
+                        </div>
+                        <div class="flex justify-end gap-2 pt-4">
+                            <button
+                                type="button"
+                                @click="showPrescriptionModal = false"
+                                class="rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50"
+                            >
+                                Cancelar
+                            </button>
+                            <button
+                                type="submit"
+                                :disabled="prescriptionForm.processing"
+                                class="rounded-lg bg-purple-600 px-4 py-2 text-sm font-semibold text-white hover:bg-purple-500 disabled:cursor-not-allowed disabled:opacity-50"
+                            >
+                                Crear Receta
+                            </button>
+                        </div>
+                    </form>
                 </div>
             </div>
         </div>

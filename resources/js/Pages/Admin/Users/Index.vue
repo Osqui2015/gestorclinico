@@ -82,7 +82,7 @@ const confirmDelete = (userId: number) => {
         <template #header>
             <div class="flex items-center justify-between">
                 <h2 class="text-xl font-semibold leading-tight text-gray-800">
-                    Gestión de Doctores y Usuarios
+                    Gestión de Perfiles de Usuario
                 </h2>
                 <Link
                     :href="route('admin.users.create')"
@@ -98,7 +98,7 @@ const confirmDelete = (userId: number) => {
                 <div class="rounded-lg bg-white shadow-sm">
                     <div class="border-b border-gray-200 p-6">
                         <h1 class="mb-4 text-2xl font-bold text-gray-900">
-                            � Lista de Usuarios ({{ users.data.length }})
+                            Lista de Usuarios ({{ users.data.length }})
                         </h1>
                     </div>
 

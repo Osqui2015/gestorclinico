@@ -9,9 +9,19 @@ import TextInput from "@/Components/TextInput.vue";
 
 interface Props {
     specialties: string[];
+    availableRoles: Array<{
+        value: string;
+        label: string;
+    }>;
+    availableModules: Array<{
+        id: string;
+        label: string;
+        icon: string;
+        description: string;
+    }>;
 }
 
-withDefaults(defineProps<Props>(), {});
+const props = withDefaults(defineProps<Props>(), {});
 
 const form = useForm({
     name: "",
@@ -25,6 +35,7 @@ const form = useForm({
     phone: "",
     address: "",
     role: "doctor",
+    allowed_modules: [] as string[],
 });
 
 const isDoctorRole = computed(() => form.role === "doctor");
@@ -276,35 +287,12 @@ const submit = () => {
                                         class="mt-1 block w-full rounded-md border-gray-300 shadow-sm"
                                         required
                                     >
-                                        <option value="doctor">
-                                            👨‍⚕️ Doctor
-                                        </option>
-                                        <option value="admin">
-                                            🔐 Administrador
-                                        </option>
-                                        <option value="operating_room_manager">
-                                            🏥 Encargado de Quirófano
-                                        </option>
-                                        <option value="pharmacy">
-                                            💊 Farmacia
-                                        </option>
-                                        <option value="secretary">
-                                            🗂️ Secretaría
-                                        </option>
-                                        <option value="nurse">
-                                            🩺 Enfermería
-                                        </option>
-                                        <option value="emergency">
-                                            🚑 Guardia / Emergencias
-                                        </option>
-                                        <option value="accountant">
-                                            💼 Contabilidad
-                                        </option>
-                                        <option value="maintenance">
-                                            🔧 Mantenimiento
-                                        </option>
-                                        <option value="paramedic">
-                                            🚐 Paramédico / Ambulancia
+                                        <option
+                                            v-for="roleOption in availableRoles"
+                                            :key="roleOption.value"
+                                            :value="roleOption.value"
+                                        >
+                                            {{ roleOption.label }}
                                         </option>
                                     </select>
                                     <InputError
@@ -313,6 +301,50 @@ const submit = () => {
                                     />
                                 </div>
                             </div>
+                        </div>
+
+                        <!-- Sección: Módulos Permitidos -->
+                        <div v-if="form.role !== 'admin'" class="border-b pb-6">
+                            <h3
+                                class="mb-4 text-lg font-semibold text-gray-900"
+                            >
+                                🔑 Permisos de Módulos
+                            </h3>
+                            <p class="mb-4 text-sm text-gray-600">
+                                Selecciona los módulos a los que este usuario
+                                tendrá acceso. Deja vacío para permitir acceso a
+                                todos los módulos por defecto.
+                            </p>
+
+                            <div class="grid grid-cols-1 gap-3 md:grid-cols-2">
+                                <label
+                                    v-for="module in availableModules"
+                                    :key="module.id"
+                                    class="flex items-start gap-3 rounded-lg border border-gray-200 p-4 hover:border-primary-300 hover:bg-primary-50 cursor-pointer transition-all"
+                                >
+                                    <input
+                                        type="checkbox"
+                                        :value="module.id"
+                                        v-model="form.allowed_modules"
+                                        class="mt-1 h-4 w-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500"
+                                    />
+                                    <div class="flex-1">
+                                        <div class="font-medium text-gray-900">
+                                            <span class="mr-2">{{
+                                                module.icon
+                                            }}</span>
+                                            {{ module.label }}
+                                        </div>
+                                        <div class="text-sm text-gray-600">
+                                            {{ module.description }}
+                                        </div>
+                                    </div>
+                                </label>
+                            </div>
+                            <InputError
+                                class="mt-2"
+                                :message="form.errors.allowed_modules"
+                            />
                         </div>
 
                         <!-- Sección: Credenciales de Acceso -->

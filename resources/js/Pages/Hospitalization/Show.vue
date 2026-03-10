@@ -113,7 +113,7 @@ const cleaningForm = useForm({
 const updateDischargeDate = () => {
     dischargeDateForm.post(
         route(
-            "hospitalizations.hospitalizations.update-discharge-date",
+            "hospitalizations.update-discharge-date",
             props.bed.currentHospitalization!.id,
         ),
         {
@@ -136,7 +136,7 @@ const dischargePatient = () => {
 
     dischargeForm.post(
         route(
-            "hospitalizations.hospitalizations.discharge",
+            "hospitalizations.discharge",
             props.bed.currentHospitalization!.id,
         ),
         {
@@ -148,7 +148,7 @@ const dischargePatient = () => {
 const updateObservations = () => {
     observationsForm.post(
         route(
-            "hospitalizations.hospitalizations.update-observations",
+            "hospitalizations.update-observations",
             props.bed.currentHospitalization!.id,
         ),
         {

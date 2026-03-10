@@ -137,9 +137,9 @@ class Patient extends Model
     /**
      * Get age
      */
-    public function getAgeAttribute(): int
+    public function getAgeAttribute(): ?int
     {
-        return $this->birth_date->age;
+        return $this->birth_date?->age;
     }
 
     /**

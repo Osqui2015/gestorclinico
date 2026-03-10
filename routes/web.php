@@ -218,14 +218,22 @@ Route::middleware('auth')->group(function () {
         Route::get('/{bed}', [HospitalizationController::class, 'show'])->name('show');
 
         // Hospitalization management
-        Route::post('/hospitalizations/{hospitalization}/update-discharge-date', [HospitalizationController::class, 'updateDischargeDate'])->name('hospitalizations.update-discharge-date');
-        Route::post('/hospitalizations/{hospitalization}/discharge', [HospitalizationController::class, 'discharge'])->name('hospitalizations.discharge');
-        Route::post('/hospitalizations/{hospitalization}/transfer', [HospitalizationController::class, 'transfer'])->name('hospitalizations.transfer');
-        Route::post('/hospitalizations/{hospitalization}/update-observations', [HospitalizationController::class, 'updateObservations'])->name('hospitalizations.update-observations');
+        Route::post('/{hospitalization}/update-discharge-date', [HospitalizationController::class, 'updateDischargeDate'])->name('update-discharge-date');
+        Route::post('/{hospitalization}/discharge', [HospitalizationController::class, 'discharge'])->name('discharge');
+        Route::post('/{hospitalization}/transfer', [HospitalizationController::class, 'transfer'])->name('transfer');
+        Route::post('/{hospitalization}/update-observations', [HospitalizationController::class, 'updateObservations'])->name('update-observations');
 
         // Bed cleaning
         Route::post('/beds/{bed}/start-cleaning', [HospitalizationController::class, 'startCleaning'])->name('beds.start-cleaning');
         Route::post('/beds/{bed}/mark-cleaned', [HospitalizationController::class, 'markCleaned'])->name('beds.mark-cleaned');
+    });
+
+    // Room & Beds configuration (admin)
+    Route::middleware([\App\Http\Middleware\EnsureAdmin::class])->prefix('rooms')->name('rooms.')->group(function () {
+        Route::get('/settings', [\App\Http\Controllers\RoomController::class, 'settings'])->name('settings');
+        Route::post('/', [\App\Http\Controllers\RoomController::class, 'store'])->name('store');
+        Route::patch('/{room}', [\App\Http\Controllers\RoomController::class, 'update'])->name('update');
+        Route::delete('/{room}', [\App\Http\Controllers\RoomController::class, 'destroy'])->name('destroy');
     });
 
     // Emergency/Guardia module (emergency + doctor + nurse + admin)
@@ -240,6 +248,9 @@ Route::middleware('auth')->group(function () {
         Route::patch('/{admission}', [\App\Http\Controllers\EmergencyController::class, 'update'])->name('update');
         Route::post('/{admission}/evolution', [\App\Http\Controllers\EmergencyController::class, 'recordEvolution'])->name('record-evolution');
         Route::patch('/{admission}/status', [\App\Http\Controllers\EmergencyController::class, 'changeStatus'])->name('change-status');
+        Route::post('/{admission}/prescription', [\App\Http\Controllers\EmergencyController::class, 'createPrescription'])->name('create-prescription');
+        Route::post('/{admission}/pharmacy', [\App\Http\Controllers\EmergencyController::class, 'requestPharmacy'])->name('request-pharmacy');
+        Route::post('/{admission}/admit', [\App\Http\Controllers\EmergencyController::class, 'admitToHospital'])->name('admit-hospital');
     });
 
     // Accounting/Cuentas Corrientes module (accountant + secretary + admin)

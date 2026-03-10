@@ -12,6 +12,22 @@ use Inertia\Inertia;
 class UserController extends Controller
 {
     /**
+     * Roles gestionables desde administración.
+     */
+    protected $manageableRoles = [
+        'doctor' => '👨‍⚕️ Médico',
+        'secretary' => '🗂️ Secretaría de Turnos',
+        'admin' => '🔐 Administrador',
+        'operating_room_manager' => '🏥 Encargado de Quirófano',
+        'pharmacy' => '💊 Farmacia',
+        'nurse' => '🩺 Enfermería',
+        'emergency' => '🚑 Guardia / Emergencias',
+        'accountant' => '💼 Contabilidad',
+        'maintenance' => '🔧 Mantenimiento',
+        'paramedic' => '🚐 Paramédico / Ambulancia',
+    ];
+
+    /**
      * Especialidades médicas disponibles
      */
     protected $specialties = [
@@ -38,11 +54,95 @@ class UserController extends Controller
     ];
 
     /**
+     * Módulos disponibles del sistema
+     */
+    protected $availableModules = [
+        [
+            'id' => 'patients',
+            'label' => 'Pacientes',
+            'icon' => '👥',
+            'description' => 'Ver y gestionar pacientes',
+        ],
+        [
+            'id' => 'appointments',
+            'label' => 'Citas',
+            'icon' => '📅',
+            'description' => 'Gestionar citas médicas',
+        ],
+        [
+            'id' => 'calendar',
+            'label' => 'Calendario',
+            'icon' => '📆',
+            'description' => 'Vista de calendario de citas',
+        ],
+        [
+            'id' => 'reports',
+            'label' => 'Reportes',
+            'icon' => '📊',
+            'description' => 'Ver reportes y estadísticas',
+        ],
+        [
+            'id' => 'schedules',
+            'label' => 'Horarios',
+            'icon' => '🕐',
+            'description' => 'Gestionar horarios médicos',
+        ],
+        [
+            'id' => 'pharmacy_requests',
+            'label' => 'Solicitudes Farmacia',
+            'icon' => '💊',
+            'description' => 'Solicitudes a farmacia',
+        ],
+        [
+            'id' => 'operations',
+            'label' => 'Quirófanos',
+            'icon' => '🏥',
+            'description' => 'Gestionar operaciones quirúrgicas',
+        ],
+        [
+            'id' => 'hospitalizations',
+            'label' => 'Internación',
+            'icon' => '🛏️',
+            'description' => 'Gestionar internaciones',
+        ],
+        [
+            'id' => 'pre_admissions',
+            'label' => 'Pre-Internación',
+            'icon' => '🟢',
+            'description' => 'Gestionar pre-internaciones',
+        ],
+        [
+            'id' => 'emergency',
+            'label' => 'Emergencias',
+            'icon' => '🚑',
+            'description' => 'Módulo de guardia/emergencias',
+        ],
+        [
+            'id' => 'accounting',
+            'label' => 'Contabilidad',
+            'icon' => '💼',
+            'description' => 'Gestión contable y financiera',
+        ],
+        [
+            'id' => 'maintenance',
+            'label' => 'Mantenimiento',
+            'icon' => '🔧',
+            'description' => 'Gestión de mantenimiento',
+        ],
+        [
+            'id' => 'paramedic',
+            'label' => 'Paramédicos',
+            'icon' => '🚐',
+            'description' => 'Gestión de traslados',
+        ],
+    ];
+
+    /**
      * Display users managed by admin.
      */
     public function index()
     {
-        $users = User::whereIn('role', ['doctor', 'admin', 'secretary', 'pharmacy', 'operating_room_manager', 'nurse', 'emergency', 'accountant', 'maintenance', 'paramedic'])
+        $users = User::whereIn('role', array_keys($this->manageableRoles))
             ->orderBy('created_at', 'desc')
             ->paginate(10);
 
@@ -59,6 +159,8 @@ class UserController extends Controller
     {
         return Inertia::render('Admin/Users/Create', [
             'specialties' => $this->specialties,
+            'availableModules' => $this->availableModules,
+            'availableRoles' => $this->getAvailableRoles(),
         ]);
     }
 
@@ -67,6 +169,8 @@ class UserController extends Controller
      */
     public function store(Request $request)
     {
+        $moduleIds = array_column($this->availableModules, 'id');
+
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'dni' => 'required|string|unique:users|max:20',
@@ -77,7 +181,9 @@ class UserController extends Controller
             'professional_id' => 'nullable|string|max:100',
             'phone' => 'nullable|string|max:20',
             'address' => 'nullable|string|max:500',
-            'role' => 'required|in:doctor,admin,secretary,pharmacy,operating_room_manager,nurse,emergency,accountant,maintenance,paramedic',
+            'role' => 'required|in:' . implode(',', array_keys($this->manageableRoles)),
+            'allowed_modules' => 'nullable|array',
+            'allowed_modules.*' => 'string|in:' . implode(',', $moduleIds),
         ]);
 
         User::create(array_merge($validated, [
@@ -94,6 +200,8 @@ class UserController extends Controller
     public function edit(User $user)
     {
         return Inertia::render('Admin/Users/Edit', [
+            'availableModules' => $this->availableModules,
+            'availableRoles' => $this->getAvailableRoles(),
             'user' => $user,
             'specialties' => $this->specialties,
         ]);
@@ -104,6 +212,8 @@ class UserController extends Controller
      */
     public function update(Request $request, User $user)
     {
+        $moduleIds = array_column($this->availableModules, 'id');
+
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'dni' => 'required|string|unique:users,dni,' . $user->id . '|max:20',
@@ -113,7 +223,9 @@ class UserController extends Controller
             'professional_id' => 'nullable|string|max:100',
             'phone' => 'nullable|string|max:20',
             'address' => 'nullable|string|max:500',
-            'role' => 'required|in:doctor,admin,secretary,pharmacy,operating_room_manager,nurse,emergency,accountant,maintenance,paramedic',
+            'allowed_modules' => 'nullable|array',
+            'allowed_modules.*' => 'string|in:' . implode(',', $moduleIds),
+            'role' => 'required|in:' . implode(',', array_keys($this->manageableRoles)),
         ]);
 
         $user->update($validated);
@@ -136,5 +248,24 @@ class UserController extends Controller
 
         return redirect()->route('admin.users.index')
             ->with('success', 'Usuario eliminado exitosamente');
+    }
+
+    /**
+     * Role options consumidas por el frontend.
+     *
+     * @return array<int, array{value: string, label: string}>
+     */
+    protected function getAvailableRoles(): array
+    {
+        $roles = [];
+
+        foreach ($this->manageableRoles as $value => $label) {
+            $roles[] = [
+                'value' => $value,
+                'label' => $label,
+            ];
+        }
+
+        return $roles;
     }
 }

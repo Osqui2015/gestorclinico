@@ -29,6 +29,7 @@ class User extends Authenticatable
         'phone',
         'address',
         'professional_id',
+        'allowed_modules',
         // Campos ReNaPDiS
         'matricula_nacional',
         'matricula_provincial',
@@ -63,6 +64,7 @@ class User extends Authenticatable
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
+            'allowed_modules' => 'array',
             'validado_refeps' => 'boolean',
             'fecha_validacion_refeps' => 'datetime',
             'firma_electronica_habilitada' => 'boolean',
@@ -225,5 +227,51 @@ class User extends Authenticatable
     public function isParamedic(): bool
     {
         return $this->role === 'paramedic';
+    }
+
+    /**
+     * Check if user has access to a specific module.
+     */
+    public function hasModuleAccess(string $module): bool
+    {
+        // Admin always has access to all modules
+        if ($this->isAdmin()) {
+            return true;
+        }
+
+        // If no modules are specified, allow all (backward compatibility)
+        if (empty($this->allowed_modules)) {
+            return true;
+        }
+
+        return in_array($module, $this->allowed_modules);
+    }
+
+    /**
+     * Get all allowed modules for this user.
+     */
+    public function getAllowedModules(): array
+    {
+        // Admin has access to everything
+        if ($this->isAdmin()) {
+            return [
+                'patients',
+                'appointments',
+                'calendar',
+                'reports',
+                'schedules',
+                'pharmacy_requests',
+                'operations',
+                'hospitalizations',
+                'pre_admissions',
+                'emergency',
+                'accounting',
+                'maintenance',
+                'paramedic',
+                'admin',
+            ];
+        }
+
+        return $this->allowed_modules ?? [];
     }
 }

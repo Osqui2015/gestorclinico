@@ -19,109 +19,352 @@ const isParamedic = user?.role === "paramedic";
 
 const mobileMenuOpen = ref(false);
 
+// Check if user has access to a specific module
+const hasModuleAccess = (module: string): boolean => {
+    // Admin always has access
+    if (isAdmin) return true;
+
+    // If no allowed_modules is set, allow all (backward compatibility)
+    if (!user?.allowed_modules || user.allowed_modules.length === 0) {
+        return true;
+    }
+
+    return user.allowed_modules.includes(module);
+};
+
 const menuItems = [
-    { label: "Pacientes", href: "patients.index", icon: "👥" },
-    { label: "Citas", href: "appointments.index", icon: "📅" },
-    { label: "Calendario", href: "appointments.calendar", icon: "📆" },
+    {
+        label: "Pacientes",
+        href: "patients.index",
+        icon: "👥",
+        module: "patients",
+    },
+    {
+        label: "Citas",
+        href: "appointments.index",
+        icon: "📅",
+        module: "appointments",
+    },
+    {
+        label: "Calendario",
+        href: "appointments.calendar",
+        icon: "📆",
+        module: "calendar",
+    },
 ];
 
 const secretaryItems = [
-    { label: "Gestión de Turnos", href: "secretary.turns.index", icon: "📋" },
-    { label: "Pre-Internación", href: "pre-admissions.index", icon: "🟢" },
+    {
+        label: "Gestión de Turnos",
+        href: "secretary.turns.index",
+        icon: "📋",
+        module: "appointments",
+    },
+    {
+        label: "Pre-Internación",
+        href: "pre-admissions.index",
+        icon: "🟢",
+        module: "pre_admissions",
+    },
 ];
 
 const doctorItems = [
-    { label: "Mi Agenda", href: "dashboard", icon: "📋" },
-    { label: "Reportes", href: "doctor.reports", icon: "📊" },
-    { label: "Horarios", href: "doctor-schedules.index", icon: "🕐" },
-    { label: "Excepciones", href: "doctor-exceptions.index", icon: "🚫" },
+    {
+        label: "Mi Agenda",
+        href: "dashboard",
+        icon: "📋",
+        module: "appointments",
+    },
+    {
+        label: "Reportes",
+        href: "doctor.reports",
+        icon: "📊",
+        module: "reports",
+    },
+    {
+        label: "Horarios",
+        href: "doctor-schedules.index",
+        icon: "🕐",
+        module: "schedules",
+    },
+    {
+        label: "Excepciones",
+        href: "doctor-exceptions.index",
+        icon: "🚫",
+        module: "schedules",
+    },
     {
         label: "Solicitudes Farmacia",
         href: "pharmacy-requests.my-requests",
         icon: "💊",
+        module: "pharmacy_requests",
     },
-    { label: "Quirófanos", href: "operations.index", icon: "🏥" },
-    { label: "Nueva Operación", href: "operations.create", icon: "➕" },
-    { label: "Internación", href: "hospitalizations.index", icon: "🛏️" },
+    {
+        label: "Quirófanos",
+        href: "operations.index",
+        icon: "🏥",
+        module: "operations",
+    },
+    {
+        label: "Nueva Operación",
+        href: "operations.create",
+        icon: "➕",
+        module: "operations",
+    },
+    {
+        label: "Internación",
+        href: "hospitalizations.index",
+        icon: "🛏️",
+        module: "hospitalizations",
+    },
 ];
 
 const nurseItems = [
-    { label: "Gestión de Camas", href: "hospitalizations.index", icon: "🛏️" },
-    { label: "Nueva Internación", href: "hospitalizations.create", icon: "➕" },
-    { label: "Historial", href: "hospitalizations.history", icon: "📋" },
+    {
+        label: "Gestión de Camas",
+        href: "hospitalizations.index",
+        icon: "🛏️",
+        module: "hospitalizations",
+    },
+    {
+        label: "Nueva Internación",
+        href: "hospitalizations.create",
+        icon: "➕",
+        module: "hospitalizations",
+    },
+    {
+        label: "Historial",
+        href: "hospitalizations.history",
+        icon: "📋",
+        module: "hospitalizations",
+    },
 ];
 
 const emergencyItems = [
-    { label: "Guardia", href: "emergency.board", icon: "🚑" },
-    { label: "Nueva Admisión", href: "emergency.create", icon: "➕" },
-    { label: "Historial ER", href: "emergency.history", icon: "📄" },
+    {
+        label: "Guardia",
+        href: "emergency.board",
+        icon: "🚑",
+        module: "emergency",
+    },
+    {
+        label: "Nueva Admisión",
+        href: "emergency.create",
+        icon: "➕",
+        module: "emergency",
+    },
+    {
+        label: "Historial ER",
+        href: "emergency.history",
+        icon: "📄",
+        module: "emergency",
+    },
 ];
 
 const accountantItems = [
-    { label: "Cuentas", href: "accounting.dashboard", icon: "💼" },
+    {
+        label: "Cuentas",
+        href: "accounting.dashboard",
+        icon: "💼",
+        module: "accounting",
+    },
     {
         label: "Pacientes Cuenta",
         href: "accounting.index",
         icon: "📒",
+        module: "accounting",
     },
-    { label: "Deudores", href: "accounting.debtors", icon: "📉" },
+    {
+        label: "Deudores",
+        href: "accounting.debtors",
+        icon: "📉",
+        module: "accounting",
+    },
 ];
 
 const maintenanceItems = [
-    { label: "Mantenimiento", href: "maintenance.index", icon: "🔧" },
+    {
+        label: "Mantenimiento",
+        href: "maintenance.index",
+        icon: "🔧",
+        module: "maintenance",
+    },
 ];
 
 const paramedicItems = [
-    { label: "Traslados", href: "paramedic.dashboard", icon: "🚐" },
+    {
+        label: "Traslados",
+        href: "paramedic.dashboard",
+        icon: "🚐",
+        module: "paramedic",
+    },
 ];
 
+const uniqueByHref = (items: Array<{ href: string } & Record<string, any>>) => {
+    const seen = new Set<string>();
+    return items.filter((item) => {
+        if (seen.has(item.href)) {
+            return false;
+        }
+
+        seen.add(item.href);
+        return true;
+    });
+};
+
 const pharmacyItems = [
-    { label: "Dashboard", href: "pharmacy.dashboard", icon: "💊" },
-    { label: "Inventario", href: "pharmacy.items.index", icon: "📦" },
-    { label: "Solicitudes", href: "pharmacy.requests.index", icon: "📋" },
+    {
+        label: "Dashboard",
+        href: "pharmacy.dashboard",
+        icon: "💊",
+        module: "pharmacy_requests",
+    },
+    {
+        label: "Inventario",
+        href: "pharmacy.items.index",
+        icon: "📦",
+        module: "pharmacy_requests",
+    },
+    {
+        label: "Solicitudes",
+        href: "pharmacy.requests.index",
+        icon: "📋",
+        module: "pharmacy_requests",
+    },
 ];
 
 const operatingRoomManagerItems = [
-    { label: "Agenda Quirófanos", href: "operations.index", icon: "🏥" },
-    { label: "Nueva Operación", href: "operations.create", icon: "➕" },
+    {
+        label: "Agenda Quirófanos",
+        href: "operations.index",
+        icon: "🏥",
+        module: "operations",
+    },
+    {
+        label: "Nueva Operación",
+        href: "operations.create",
+        icon: "➕",
+        module: "operations",
+    },
     {
         label: "Salas Quirófano",
         href: "operations.rooms.settings",
         icon: "⚙️",
+        module: "operations",
     },
 ];
 
 const adminItems = [
-    { label: "Auditoría", href: "admin.audits.index", icon: "📋" },
-    { label: "Doctores", href: "admin.users.index", icon: "👨‍⚕️" },
-    { label: "Tablero de Colas", href: "admin.queues.index", icon: "🏥" },
-    { label: "Emergencias", href: "emergency.board", icon: "🚑" },
-    { label: "Cuentas", href: "accounting.dashboard", icon: "💼" },
-    { label: "Mantenimiento", href: "maintenance.index", icon: "🔧" },
-    { label: "Paramédicos", href: "paramedic.dashboard", icon: "🚐" },
-    { label: "Internación", href: "hospitalizations.index", icon: "🛏️" },
-    { label: "Pre-Internación", href: "pre-admissions.index", icon: "🟢" },
-    { label: "Quirófanos", href: "operations.index", icon: "🏥" },
+    {
+        label: "Auditoría",
+        href: "admin.audits.index",
+        icon: "📋",
+        module: "admin",
+    },
+    {
+        label: "Usuarios",
+        href: "admin.users.index",
+        icon: "👨‍⚕️",
+        module: "admin",
+    },
+    {
+        label: "Tablero de Colas",
+        href: "admin.queues.index",
+        icon: "🏥",
+        module: "admin",
+    },
+    {
+        label: "Emergencias",
+        href: "emergency.board",
+        icon: "🚑",
+        module: "emergency",
+    },
+    {
+        label: "Cuentas",
+        href: "accounting.dashboard",
+        icon: "💼",
+        module: "accounting",
+    },
+    {
+        label: "Mantenimiento",
+        href: "maintenance.index",
+        icon: "🔧",
+        module: "maintenance",
+    },
+    {
+        label: "Paramédicos",
+        href: "paramedic.dashboard",
+        icon: "🚐",
+        module: "paramedic",
+    },
+    {
+        label: "Internación",
+        href: "hospitalizations.index",
+        icon: "🛏️",
+        module: "hospitalizations",
+    },
+    {
+        label: "Pre-Internación",
+        href: "pre-admissions.index",
+        icon: "🟢",
+        module: "pre_admissions",
+    },
+    {
+        label: "Quirófanos",
+        href: "operations.index",
+        icon: "🏥",
+        module: "operations",
+    },
     {
         label: "Salas Quirófano",
         href: "operations.rooms.settings",
         icon: "⚙️",
+        module: "operations",
+    },
+    {
+        label: "Habitaciones y Camas",
+        href: "rooms.settings",
+        icon: "🛏️",
+        module: "hospitalizations",
     },
 ];
 
-const visibleItems = [
-    ...(isDoctor ? doctorItems : []),
-    ...(isEmergency ? emergencyItems : []),
-    ...(isParamedic ? paramedicItems : []),
-    ...(isMaintenance ? maintenanceItems : []),
-    ...(isAccountant ? accountantItems : []),
-    ...(isPharmacy ? pharmacyItems : []),
-    ...(isNurse ? nurseItems : []),
-    ...(isOperatingRoomManager ? operatingRoomManagerItems : []),
-    ...(!isPharmacy ? menuItems : []),
-    ...(isSecretary ? secretaryItems : []),
+// Filter items based on allowed modules
+const visibleItems = uniqueByHref([
+    ...(isDoctor
+        ? doctorItems.filter((item) => hasModuleAccess(item.module))
+        : []),
+    ...(isEmergency
+        ? emergencyItems.filter((item) => hasModuleAccess(item.module))
+        : []),
+    ...(isParamedic
+        ? paramedicItems.filter((item) => hasModuleAccess(item.module))
+        : []),
+    ...(isMaintenance
+        ? maintenanceItems.filter((item) => hasModuleAccess(item.module))
+        : []),
+    ...(isAccountant
+        ? accountantItems.filter((item) => hasModuleAccess(item.module))
+        : []),
+    ...(isPharmacy
+        ? pharmacyItems.filter((item) => hasModuleAccess(item.module))
+        : []),
+    ...(isNurse
+        ? nurseItems.filter((item) => hasModuleAccess(item.module))
+        : []),
+    ...(isOperatingRoomManager
+        ? operatingRoomManagerItems.filter((item) =>
+              hasModuleAccess(item.module),
+          )
+        : []),
+    ...(!isPharmacy
+        ? menuItems.filter((item) => hasModuleAccess(item.module))
+        : []),
+    ...(isSecretary
+        ? secretaryItems.filter((item) => hasModuleAccess(item.module))
+        : []),
     ...(isAdmin ? adminItems : []),
-];
+]);
 
 // Get user initials
 const getUserInitials = (name: string) => {
@@ -151,41 +394,23 @@ const getRoleLabel = (role: string) => {
 </script>
 
 <template>
-    <nav class="border-b border-gray-200 bg-white shadow-sm">
+    <nav class="overflow-x-hidden border-b border-gray-200 bg-white shadow-sm">
         <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-            <div class="flex h-16 justify-between items-center">
+            <div class="flex min-h-16 items-center justify-between gap-3 py-2">
                 <!-- Logo/Brand -->
-                <div class="flex items-center gap-8">
+                <div class="min-w-0">
                     <Link
                         href="/dashboard"
-                        class="flex items-center gap-2 text-xl font-bold text-primary-600 hover:text-primary-700"
+                        class="flex min-w-0 items-center gap-2 text-lg font-bold text-primary-600 hover:text-primary-700 sm:text-xl"
                     >
                         <span class="text-2xl">🏥</span>
-                        <span>Gestor Clínico</span>
+                        <span class="truncate">Gestor Clínico</span>
                     </Link>
-
-                    <!-- Desktop Menu -->
-                    <div class="hidden md:flex gap-2">
-                        <Link
-                            v-for="item in visibleItems"
-                            :key="item.href"
-                            :href="route(item.href)"
-                            class="rounded-lg px-4 py-2 text-sm font-medium transition-all duration-200"
-                            :class="
-                                route().current() === item.href
-                                    ? 'bg-primary-50 text-primary-700 font-semibold'
-                                    : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
-                            "
-                        >
-                            <span class="mr-1.5">{{ item.icon }}</span>
-                            {{ item.label }}
-                        </Link>
-                    </div>
                 </div>
 
                 <!-- User Info & Dropdown -->
-                <div class="flex items-center gap-4">
-                    <div class="hidden md:block relative">
+                <div class="flex shrink-0 items-center gap-2 sm:gap-4">
+                    <div class="relative hidden lg:block">
                         <Dropdown align="right" width="48">
                             <template #trigger>
                                 <button
@@ -240,7 +465,7 @@ const getRoleLabel = (role: string) => {
                     <!-- Mobile Menu Toggle -->
                     <button
                         @click="mobileMenuOpen = !mobileMenuOpen"
-                        class="md:hidden rounded-lg p-2 text-gray-600 hover:bg-gray-100"
+                        class="rounded-lg p-2 text-gray-600 hover:bg-gray-100 lg:hidden"
                     >
                         <svg
                             class="h-6 w-6"
@@ -267,10 +492,28 @@ const getRoleLabel = (role: string) => {
                 </div>
             </div>
 
+            <!-- Desktop Menu -->
+            <div class="hidden w-full flex-wrap gap-2 pb-3 lg:flex">
+                <Link
+                    v-for="item in visibleItems"
+                    :key="item.href"
+                    :href="route(item.href)"
+                    class="whitespace-nowrap rounded-lg px-4 py-2 text-sm font-medium transition-all duration-200"
+                    :class="
+                        route().current() === item.href
+                            ? 'bg-primary-50 text-primary-700 font-semibold'
+                            : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
+                    "
+                >
+                    <span class="mr-1.5">{{ item.icon }}</span>
+                    {{ item.label }}
+                </Link>
+            </div>
+
             <!-- Mobile Menu -->
             <div
                 v-if="mobileMenuOpen"
-                class="border-t border-gray-200 py-3 md:hidden"
+                class="border-t border-gray-200 py-3 lg:hidden"
             >
                 <div class="space-y-1">
                     <Link
