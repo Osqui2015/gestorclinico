@@ -114,7 +114,7 @@ $emergency = User::updateOrCreate(
         'phone' => '261-5554567',
     ]
 );
-echo "✅ Emergencias creado\n";
+echo "✅ Emergencias fue  creado\n";
 echo "   Email: emergencia@gestor.com\n";
 echo "   Pass:  emergencia123\n\n";
 
