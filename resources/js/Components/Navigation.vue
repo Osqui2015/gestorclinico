@@ -1,8 +1,9 @@
 <script setup lang="ts">
-import { usePage, Link } from "@inertiajs/vue3";
-import { ref } from "vue";
+import { usePage, Link } from '@inertiajs/vue3';
+import { onBeforeUnmount, onMounted, ref } from 'vue';
 import Dropdown from "@/Components/Dropdown.vue";
 import DropdownLink from "@/Components/DropdownLink.vue";
+import { echo } from '@/echo';
 
 const page = usePage();
 const user = page.props.auth?.user as any;
@@ -18,6 +19,12 @@ const isMaintenance = user?.role === "maintenance";
 const isParamedic = user?.role === "paramedic";
 
 const mobileMenuOpen = ref(false);
+const realtimeNotifications = ref<
+    Array<{ id: number; message: string; requestId: number }>
+>([]);
+
+let doctorChannel: any = null;
+const notificationTimers = new Map<number, number>();
 
 // Check if user has access to a specific module
 const hasModuleAccess = (module: string): boolean => {
@@ -391,6 +398,67 @@ const getRoleLabel = (role: string) => {
     };
     return labels[role] || role;
 };
+
+const removeNotification = (id: number): void => {
+    const timer = notificationTimers.get(id);
+    if (timer) {
+        window.clearTimeout(timer);
+        notificationTimers.delete(id);
+    }
+
+    realtimeNotifications.value = realtimeNotifications.value.filter(
+        (notification) => notification.id !== id,
+    );
+};
+
+const pushNotification = (message: string, requestId: number): void => {
+    const id = Date.now() + Math.floor(Math.random() * 1000);
+
+    realtimeNotifications.value = [
+        ...realtimeNotifications.value,
+        { id, message, requestId },
+    ];
+
+    const timer = window.setTimeout(() => {
+        removeNotification(id);
+    }, 6000);
+
+    notificationTimers.set(id, timer);
+};
+
+onMounted(() => {
+    const echoInstance = echo;
+
+    if (!echoInstance || !user?.id || user?.role !== 'doctor') {
+        return;
+    }
+
+    doctorChannel = echoInstance.private(`doctor.${user.id}`);
+    doctorChannel.listen('.PharmacyRequestCompleted', (event: {
+        message?: string;
+        pharmacy_request_id?: number;
+    }) => {
+        pushNotification(
+            event.message ?? 'Farmacia completó una solicitud.',
+            event.pharmacy_request_id ?? 0,
+        );
+    });
+});
+
+onBeforeUnmount(() => {
+    const echoInstance = echo;
+
+    if (!echoInstance || !doctorChannel || !user?.id) {
+        return;
+    }
+
+    doctorChannel.stopListening('.PharmacyRequestCompleted');
+    echoInstance.leaveChannel(`doctor.${user.id}`);
+    doctorChannel = null;
+
+    notificationTimers.forEach((timer) => window.clearTimeout(timer));
+    notificationTimers.clear();
+});
 </script>
 
 <template>
@@ -566,4 +634,33 @@ const getRoleLabel = (role: string) => {
             </div>
         </div>
     </nav>
+
+    <div class="pointer-events-none fixed right-4 top-4 z-50 flex w-full max-w-sm flex-col gap-3">
+        <div
+            v-for="notification in realtimeNotifications"
+            :key="notification.id"
+            class="pointer-events-auto rounded-xl border border-emerald-200 bg-white/95 p-4 shadow-xl backdrop-blur"
+        >
+            <div class="flex items-start justify-between gap-3">
+                <div>
+                    <p class="text-sm font-semibold text-emerald-700">
+                        Farmacia completó una solicitud
+                    </p>
+                    <p class="mt-1 text-sm text-gray-700">
+                        {{ notification.message }}
+                    </p>
+                    <p class="mt-2 text-xs text-gray-500">
+                        Solicitud #{{ notification.requestId }}
+                    </p>
+                </div>
+                <button
+                    type="button"
+                    class="text-gray-400 transition hover:text-gray-700"
+                    @click="removeNotification(notification.id)"
+                >
+                    ✕
+                </button>
+            </div>
+        </div>
+    </div>
 </template>

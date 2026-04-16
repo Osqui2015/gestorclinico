@@ -1,7 +1,8 @@
 <script setup lang="ts">
-import { ref, computed } from "vue";
+import { computed, onBeforeUnmount, onMounted } from 'vue';
 import { Head, Link, router } from "@inertiajs/vue3";
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout.vue";
+import { echo } from '@/echo';
 
 interface Patient {
     id: number;
@@ -43,6 +44,8 @@ interface Props {
 }
 
 const props = defineProps<Props>();
+
+let emergencyChannel: any = null;
 
 const triageLevels: Record<
     number,
@@ -127,6 +130,35 @@ const viewDetails = (id: number) => {
 const recordEvolution = (id: number) => {
     router.get(route("emergency.evolution", id));
 };
+
+const refreshBoard = (): void => {
+    router.reload({
+        only: ['admissions'],
+    });
+};
+
+onMounted(() => {
+    const echoInstance = echo;
+
+    if (!echoInstance) {
+        return;
+    }
+
+    emergencyChannel = echoInstance.channel('emergency-board');
+    emergencyChannel.listen('.EmergencyBoardUpdated', refreshBoard);
+});
+
+onBeforeUnmount(() => {
+    const echoInstance = echo;
+
+    if (!echoInstance || !emergencyChannel) {
+        return;
+    }
+
+    emergencyChannel.stopListening('.EmergencyBoardUpdated');
+    echoInstance.leaveChannel('emergency-board');
+    emergencyChannel = null;
+});
 </script>
 
 <template>

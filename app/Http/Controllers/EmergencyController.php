@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Events\EmergencyBoardUpdated;
 use App\Models\EmergencyAdmission;
 use App\Models\EmergencyEvolution;
 use App\Models\Patient;
@@ -252,6 +253,8 @@ class EmergencyController extends Controller
       'status' => 'waiting',
     ]);
 
+    EmergencyBoardUpdated::dispatch($admission->id);
+
     return redirect()->route('emergency.show', $admission)->with('success', 'Paciente ingresado a emergencias');
   }
 
@@ -460,6 +463,8 @@ class EmergencyController extends Controller
     }
 
     $admission->update($data);
+
+    EmergencyBoardUpdated::dispatch($admission->id);
 
     return back()->with('success', 'Estado actualizado');
   }

@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Events\PharmacyRequestCompleted;
 use App\Models\PharmacyRequest;
 use App\Models\PharmacyRequestItem;
 use App\Models\PharmacyItem;
@@ -216,6 +217,12 @@ class PharmacyRequestController extends Controller
           'completed_at' => now(),
           'pharmacy_notes' => $validated['pharmacy_notes'] ?? null,
         ]);
+
+        PharmacyRequestCompleted::dispatch(
+          (int) $pharmacyRequest->requested_by,
+          (int) $pharmacyRequest->id,
+          'La medicación de la solicitud #' . $pharmacyRequest->id . ' ha sido entregada.',
+        );
       } else {
         $pharmacyRequest->update([
           'pharmacy_notes' => $validated['pharmacy_notes'] ?? null,
